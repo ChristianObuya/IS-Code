@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Student Home | CampusBite</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>CampusBite</h1>
+            <p>Welcome to Strathmore University Canteen</p>
+            <div class="user-actions">
+                <button id="ordersBtn">My Orders</button>
+                <a href="index.html" id="logoutBtn">Logout</a>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <h2>What would you like to eat today?</h2>
+            <p>Browse the menu and place your order online. Skip the queue!</p>
+        </section>
+
+        <!-- Order Status Banner -->
+        <section class="status-banner" id="statusBanner" style="display: none;">
+            <p><strong>Current Order:</strong> <span id="orderStatusText">Preparing</span> | 
+               <span id="orderTime"></span></p>
+        </section>
+
+        <!-- Menu Category Filter -->
+        <section class="filters">
+            <button class="filter-btn active" data-category="all">All Items</button>
+            <button class="filter-btn" data-category="main">Main Course</button>
+            <button class="filter-btn" data-category="snack">Snacks</button>
+            <button class="filter-btn" data-category="beverage">Beverages</button>
+        </section>
+
+        <!-- Menu Items Grid -->
+        <section class="menu-grid" id="menuGrid">
+            <!-- Data loaded dynamically from backend -->
+        </section>
+
+        <!-- Cart Sidebar -->
+        <aside class="cart-sidebar">
+            <h3>Your Order</h3>
+            <ul id="cartItems">
+                <li class="empty">Your cart is empty</li>
+            </ul>
+            <div class="cart-total">
+                <strong>Total: KES </strong><span id="cartTotal">0.00</span>
+            </div>
+            <button id="checkoutBtn" disabled>Proceed to Payment</button>
+        </aside>
+    </div>
+
+    <!-- Orders Modal -->
+    <div class="modal" id="ordersModal" style="display: none;">
+        <div class="modal-content">
+            <h3>My Orders</h3>
+            <div id="ordersList">
+                <p>No orders placed yet.</p>
+            </div>
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script src="student_home.js"></script>
+</body>
+</html>

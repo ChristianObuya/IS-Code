@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Staff Login | CampusBite</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="login-container">
+        <header>
+            <h1>CampusBite</h1>
+            <p>Canteen Staff Portal</p>
+        </header>
+
+        <main>
+            <h2>Staff Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="Enter your staff email" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required />
+                </div>
+
+                <button type="submit">Login</button>
+                <p id="message"></p>
+
+                <div class="links">
+                    <a href="index.html">← Back to Student Login</a>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>
