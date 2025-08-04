@@ -280,13 +280,25 @@ async function updateStock(itemID, quantity) {
 // Function to load Sales Report
 async function loadSalesReport() {
     const salesReportContent = document.getElementById('salesReportContent');
-    const salesStartDate = document.getElementById('salesStartDate').value;
-    const salesEndDate = document.getElementById('salesEndDate').value;
+    let salesStartDate = document.getElementById('salesStartDate').value;
+    let salesEndDate = document.getElementById('salesEndDate').value;
+
+    // If the date inputs are empty, provide a default 7-day range and set the input values
+    if (!salesEndDate) {
+        salesEndDate = new Date().toISOString().split('T')[0];
+        document.getElementById('salesEndDate').value = salesEndDate;
+    }
+    if (!salesStartDate) {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        salesStartDate = sevenDaysAgo.toISOString().split('T')[0];
+        document.getElementById('salesStartDate').value = salesStartDate;
+    }
 
     salesReportContent.innerHTML = '<p class="loading">Loading sales report...</p>';
 
     try {
-        let url = `../backend/get_sales_report.php?startDate=${salesStartDate}&endDate=${salesEndDate}`;
+        const url = `../backend/get_sales_report.php?startDate=${salesStartDate}&endDate=${salesEndDate}`;
         const response = await fetch(url);
         if (handleAuthError(response)) return;
 
@@ -363,14 +375,51 @@ async function loadStockReport() {
     }
 }
 
+function renderStockReportTable(stockData) {
+    if (!stockData || stockData.length === 0) {
+        return '<p>No stock data available.</p>';
+    }
+
+    let tableHTML = `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Item ID</th>
+                    <th>Item Name</th>
+                    <th>Stock Quantity</th>
+                    <th>Low Stock Threshold</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    stockData.forEach(item => {
+        tableHTML += `
+            <tr>
+                <td>${item.itemID}</td>
+                <td>${item.itemName}</td>
+                <td>${item.stockQuantity}</td>
+                <td>${item.lowStockThreshold}</td>
+            </tr>
+        `;
+    });
+    tableHTML += `</tbody></table>`;
+    return tableHTML;
+}
+
 // View Orders
 viewOrdersBtn.addEventListener('click', async () => {
+    const originalButtonText = viewOrdersBtn.textContent;
+    viewOrdersBtn.textContent = 'Loading...';
+    viewOrdersBtn.disabled = true;
+
     ordersModal.style.display = 'block';
     ordersBody.innerHTML = '<tr><td colspan="6">Loading orders...</td></tr>';
 
     try {
         const response = await fetch('../backend/get_orders.php');
-        if (handleAuthError(response)) return;
+        if (handleAuthError(response)) {
+            return; // Stop execution if auth error is handled
+        }
 
         const result = await response.json();
 
@@ -384,7 +433,6 @@ viewOrdersBtn.addEventListener('click', async () => {
             const tr = document.createElement('tr');
             tr.id = `order-row-${order.orderID}`; // Add an ID to the row for easy removal
             tr.innerHTML = `
-
                 <td>${order.orderID}</td>
                 <td>${order.studentID}</td>
                 <td>KES ${parseFloat(order.totalAmount).toFixed(2)}</td>
@@ -414,6 +462,9 @@ viewOrdersBtn.addEventListener('click', async () => {
     } catch (error) {
         ordersBody.innerHTML = '<tr><td colspan="6">Failed to load orders.</td></tr>';
         console.error('Load orders error:', error);
+    } finally {
+        viewOrdersBtn.textContent = originalButtonText;
+        viewOrdersBtn.disabled = false;
     }
 });
 

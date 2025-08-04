@@ -114,12 +114,36 @@
                             <th>Stock</th>
                             <th>Threshold</th>
                             <th>Status</th>
+                            <th>Add Stock</th>
                         </tr>
                     </thead>
                     <tbody id="inventoryList">
-                        <tr><td colspan="5" class="loading">Loading inventory...</td></tr>
+                        <tr><td colspan="6" class="loading">Loading inventory...</td></tr>
                     </tbody>
                 </table>
+            </section>
+
+            <!-- Sales Report Tab -->
+            <section id="sales" class="tab-content">
+                <h2>Sales Report</h2>
+                <div class="report-filters">
+                    <label for="salesStartDate">Start Date:</label>
+                    <input type="date" id="salesStartDate">
+                    <label for="salesEndDate">End Date:</label>
+                    <input type="date" id="salesEndDate">
+                    <button id="generateSalesReport" class="btn btn-primary">Generate</button>
+                </div>
+                <div id="salesReportContent">
+                    <p>Select a date range and click "Generate" to view the sales report.</p>
+                </div>
+            </section>
+
+            <!-- Stock Report Tab -->
+            <section id="stock" class="tab-content">
+                <h2>Stock Report</h2>
+                <div id="stockReportContent">
+                    <p class="loading">Loading stock report...</p>
+                </div>
             </section>
         </main>
 
@@ -131,7 +155,6 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-    
                                 <th>Order ID</th>
                                 <th>Student ID</th>
                                 <th>Total (KES)</th>
