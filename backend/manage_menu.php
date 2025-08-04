@@ -1,5 +1,16 @@
 <?php
+session_start();
+
 require_once 'config.php';
+
+// Check if user is logged in and is staff
+if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'staff') {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Access denied. Staff login required.']);
+    exit;
+}
+
+$staffID = (int)$_SESSION['userID'];
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -13,7 +24,7 @@ if (!in_array($action, ['add', 'edit', 'delete'])) {
     exit;
 }
 
-// Define upload directory (relative to frontend/)
+// Define upload directory
 $uploadDir = '../frontend/images/';
 $imagePath = null;
 
@@ -36,11 +47,10 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
         exit;
     }
 
-    // Move uploaded file
     if (move_uploaded_file($fileTmp, $filePath)) {
-        $imagePath = 'images/' . $fileName; // Save as `images/filename.jpg`
+        $imagePath = 'images/' . $fileName; // Save relative path
     } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to upload image.']);
+        echo json_encode(['success' => false, 'message' => 'Failed to upload image. Check folder permissions.']);
         exit;
     }
 }
@@ -59,16 +69,18 @@ try {
         }
 
         if ($action === 'add') {
-            // Use placeholder if no image
-            $finalImagePath = $imagePath ?? 'images/placeholder.jpg';
+            $pdo->beginTransaction();
 
+            // Insert into MenuItem
             $stmt = $pdo->prepare("INSERT INTO MenuItem (name, description, price, category, available, imagePath) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$name, $description, $price, $category, $available, $finalImagePath]);
+            $stmt->execute([$name, $description, $price, $category, $available, $imagePath ?: 'images/placeholder.jpg']);
             $itemID = $pdo->lastInsertId();
 
-            // Create inventory entry
+            // Insert into Inventory
             $stmt = $pdo->prepare("INSERT INTO Inventory (itemID, stockQuantity, lowStockThreshold) VALUES (?, 50, 5)");
             $stmt->execute([$itemID]);
+
+            $pdo->commit();
 
             echo json_encode([
                 'success' => true,
@@ -101,7 +113,7 @@ try {
         $id = (int)$_POST['id'];
         $pdo->beginTransaction();
 
-        // Optional: Delete image file
+        // Delete image file (optional)
         $stmt = $pdo->prepare("SELECT imagePath FROM MenuItem WHERE itemID = ?");
         $stmt->execute([$id]);
         $row = $stmt->fetch();
@@ -112,6 +124,7 @@ try {
             }
         }
 
+        // Delete from Inventory and MenuItem
         $stmt = $pdo->prepare("DELETE FROM Inventory WHERE itemID = ?");
         $stmt->execute([$id]);
 
@@ -124,6 +137,9 @@ try {
 } catch (Exception $e) {
     if ($pdo->inTransaction()) $pdo->rollback();
     error_log("Menu management error: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'An error occurred.']);
+    echo json_encode([
+        'success' => false,
+        'message' => 'An error occurred: ' . $e->getMessage()  // Now shows real error
+    ]);
 }
 ?>

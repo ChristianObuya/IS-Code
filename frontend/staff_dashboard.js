@@ -158,7 +158,7 @@ itemForm.addEventListener('submit', async (e) => {
     try {
         const response = await fetch('../backend/manage_menu.php', {
             method: 'POST',
-            body: formData
+            body: formData  // Uses multipart/form-data
         });
 
         const result = await response.json();
@@ -167,11 +167,11 @@ itemForm.addEventListener('submit', async (e) => {
             imageInput.value = '';
             loadMenuItems();
         } else {
-            alert('Save failed: ' + result.message);
+            alert('Save failed: ' + result.message);  // Now shows real error
         }
     } catch (error) {
-        alert('Network error.');
-        console.error(error);
+        alert('Network error: ' + error.message);
+        console.error('Menu save error:', error);
     }
 });
 
@@ -225,7 +225,7 @@ viewOrdersBtn.addEventListener('click', async () => {
             tr.innerHTML = `
                 <td>${order.orderID}</td>
                 <td>${order.studentID}</td>
-                <td>${order.totalAmount}</td>
+                <td>KES ${parseFloat(order.totalAmount).toFixed(2)}</td>
                 <td>${order.status}</td>
                 <td>${new Date(order.orderTime).toLocaleString()}</td>
                 <td>

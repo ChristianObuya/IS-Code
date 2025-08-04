@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 require_once 'config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -15,6 +17,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user && password_verify($password, $user['passwordHash'])) {
+        // Set session variables
+        $_SESSION['userID'] = $user['userID'];
+        $_SESSION['name'] = $user['name'];
+        $_SESSION['role'] = $user['role'];
+        $_SESSION['email'] = $user['email'];
+
         echo json_encode([
             'success' => true,
             'role' => $user['role'],

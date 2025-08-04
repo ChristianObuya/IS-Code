@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Payment | CampusBite</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>CampusBite</h1>
+            <p>Secure Payment Portal</p>
+            <a href="../backend/logout.php" id="logoutBtn">Logout</a>
+        </header>
+
+        <!-- Payment -->
+        <main class="payment-main centered-section">
+            <div class="payment-box">
+                <h2>Complete Your Payment</h2>
+                <p>Pay via M-Pesa and collect your food when ready.</p>
+
+                <section class="order-summary">
+                    <h3>Order Summary</h3>
+                    <ul id="paymentItems"></ul>
+                    <div class="summary-total">
+                        <strong>Total: KES </strong><span id="paymentTotal">0.00</span>
+                    </div>
+                </section>
+
+                <section class="payment-form">
+                    <h3>Pay with M-Pesa</h3>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="text" id="phone" placeholder="e.g., 0712345678" required />
+                    </div>
+                    <button id="payBtn">Send STK Push</button>
+                    <p id="paymentMsg"></p>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="student_payment.js"></script>
+</body>
+</html>

@@ -14,11 +14,11 @@
             <p>Canteen Staff Portal</p>
             <div class="user-actions">
                 <button id="viewOrdersBtn">View Orders</button>
-                <a href="index.html" id="logoutBtn">Logout</a>
+                <a href="../backend/logout.php" id="logoutBtn">Logout</a>
             </div>
         </header>
 
-        <!-- Horizontal Navigation Tabs -->
+        <!-- Tabs -->
         <nav class="staff-nav">
             <button class="nav-btn active" data-tab="menu">Menu Management</button>
             <button class="nav-btn" data-tab="inventory">Inventory</button>
@@ -26,14 +26,13 @@
 
         <!-- Main Content -->
         <main class="main-content staff-main">
-            <!-- Menu Management Tab -->
+            <!-- Menu Tab -->
             <section id="menu" class="tab-content active">
                 <div class="section-header">
                     <h2>Manage Menu Items</h2>
                     <button id="addItemBtn" class="btn-primary">+ Add New Item</button>
                 </div>
 
-                <!-- Add/Edit Form -->
                 <form id="itemForm" style="display: none;">
                     <h3 id="formTitle">Add New Item</h3>
                     <input type="hidden" id="itemID">
@@ -85,7 +84,6 @@
                     </div>
                 </form>
 
-                <!-- Menu Table -->
                 <table class="data-table" id="menuTable">
                     <thead>
                         <tr>
@@ -138,9 +136,7 @@
                             <th>Update</th>
                         </tr>
                     </thead>
-                    <tbody id="ordersBody">
-                        <!-- Loaded dynamically -->
-                    </tbody>
+                    <tbody id="ordersBody"></tbody>
                 </table>
                 <button onclick="closeModal()">Close</button>
             </div>

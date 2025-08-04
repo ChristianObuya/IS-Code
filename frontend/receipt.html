@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Receipt | CampusBite</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>CampusBite</h1>
+            <p>Digital Receipt</p>
+            <a href="../backend/logout.php" id="logoutBtn">Logout</a>
+        </header>
+
+        <!-- Receipt -->
+        <main class="receipt-main centered-section">
+            <div class="receipt-box">
+                <h2>Payment Confirmed</h2>
+                <p>Your order is being prepared. Collect when status is <strong>Ready</strong>.</p>
+
+                <div class="receipt-section">
+                    <h3>Receipt Details</h3>
+                    <table class="receipt-table">
+                        <tr><th>Receipt ID</th><td id="receiptID">-</td></tr>
+                        <tr><th>Order ID</th><td id="orderID">-</td></tr>
+                        <tr><th>Date & Time</th><td id="receiptTime">-</td></tr>
+                        <tr><th>Payment Method</th><td>M-Pesa</td></tr>
+                        <tr><th>Transaction ID</th><td id="transactionID">-</td></tr>
+                    </table>
+                </div>
+
+                <div class="receipt-section">
+                    <h3>Order Summary</h3>
+                    <ul id="receiptItems"></ul>
+                    <div class="summary-total">
+                        <strong>Total Paid: KES </strong><span id="receiptTotal">0.00</span>
+                    </div>
+                </div>
+
+                <div class="receipt-actions">
+                    <a href="student_home.html">Continue Shopping</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="receipt.js"></script>
+</body>
+</html>

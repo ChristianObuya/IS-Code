@@ -14,8 +14,27 @@ const orderTime = document.getElementById('orderTime');
 let cart = [];
 let userOrders = JSON.parse(localStorage.getItem('userOrders')) || [];
 let currentOrder = userOrders.length > 0 ? userOrders[userOrders.length - 1] : null;
+let studentID = null;
 
-// Display Current Order Status
+// 1. Load User Session (from login)
+async function loadUser() {
+    try {
+        // Correct: Fetch user session
+        const response = await fetch('../backend/get_user.php');
+        const result = await response.json();
+
+        if (result.success && result.role === 'student') {
+            studentID = result.userID;
+        } else {
+            window.location.href = 'index.html';
+        }
+    } catch (error) {
+        console.error('Session error:', error);
+        window.location.href = 'index.html';
+    }
+}
+
+// 2. Display Current Order Status
 function updateOrderStatus() {
     if (currentOrder && currentOrder.status !== 'collected') {
         statusBanner.style.display = 'block';
@@ -24,17 +43,20 @@ function updateOrderStatus() {
     }
 }
 
-// Fetch Menu from Backend
+// 3. Fetch Menu from Backend (Staff-Managed Items)
 async function loadMenu(category = 'all') {
     menuGrid.innerHTML = '<p class="loading">Loading menu from canteen...</p>';
 
     try {
+        // CORRECT: Fetch menu from backend
         const response = await fetch('../backend/get_menu.php');
-        if (!response.ok) throw new Error('Network error');
+        if (!response.ok) throw new Error('Network error: Failed to reach server.');
+
         const result = await response.json();
 
         if (!result.success) {
-            menuGrid.innerHTML = '<p class="error">Failed to load menu.</p>';
+            menuGrid.innerHTML = '<p class="error">Failed to load menu. Please try again later.</p>';
+            console.error('Backend error:', result.message);
             return;
         }
 
@@ -100,7 +122,7 @@ async function loadMenu(category = 'all') {
     }
 }
 
-// Add to Cart
+// 4. Add to Cart
 function addToCart(item) {
     const existing = cart.find(i => i.id === item.id);
     if (existing) {
@@ -111,7 +133,7 @@ function addToCart(item) {
     updateCart();
 }
 
-// Update Cart UI (with Delete Button)
+// 5. Update Cart UI
 function updateCart() {
     cartItems.innerHTML = '';
     let total = 0;
@@ -135,7 +157,6 @@ function updateCart() {
         checkoutBtn.disabled = false;
     }
 
-    // Recalculate total
     total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     cartTotal.textContent = total.toFixed(2);
 
@@ -148,13 +169,13 @@ function updateCart() {
     });
 }
 
-// Remove Item from Cart
+// 6. Remove from Cart
 function removeFromCart(id) {
     cart = cart.filter(item => item.id !== id);
     updateCart();
 }
 
-// Open Orders Modal
+// 7. Open Orders Modal
 ordersBtn.addEventListener('click', () => {
     ordersModal.style.display = 'block';
     ordersList.innerHTML = '';
@@ -178,41 +199,74 @@ ordersBtn.addEventListener('click', () => {
     }
 });
 
-// Close Modal
+// 8. Close Modal
 function closeModal() {
     ordersModal.style.display = 'none';
 }
 
-// Proceed to Payment
-checkoutBtn.addEventListener('click', () => {
+// 9. Proceed to Payment
+checkoutBtn.addEventListener('click', async () => {
     if (cart.length === 0) return;
+    if (!studentID) {
+        alert('Authentication error. Please log in again.');
+        window.location.href = 'index.html';
+        return;
+    }
 
     const orderData = {
         items: cart,
         total: parseFloat(cartTotal.textContent),
-        time: new Date().toLocaleTimeString(),
+        time: new Date().toISOString(),
         status: 'pending'
     };
 
+    // Save to local history
     userOrders.push({ id: Date.now(), ...orderData });
     localStorage.setItem('userOrders', JSON.stringify(userOrders));
     localStorage.setItem('pendingOrder', JSON.stringify(orderData));
 
-    window.location.href = 'student_payment.html';
+    // Send order to backend
+    try {
+        const response = await fetch('../backend/place_order.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                studentID: studentID,
+                totalAmount: orderData.total,
+                items: orderData.items.map(item => ({
+                    id: item.id,
+                    quantity: item.quantity
+                }))
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('Order saved with ID:', result.orderID);
+            window.location.href = 'student_payment.html';
+        } else {
+            alert('Failed to place order: ' + result.message);
+        }
+    } catch (error) {
+        alert('Network error. Could not place order.');
+        console.error('Order placement failed:', error);
+    }
 });
 
-// Filter Menu by Category (Horizontal Nav)
-document.querySelectorAll('.nav-btn').forEach(btn => {
+// 10. Filter Menu by Category
+document.querySelectorAll('.nav-btn, .filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.nav-btn, .filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         loadMenu(btn.dataset.category);
     });
 });
 
-// On Page Load
+//11. On Page Load
 document.addEventListener('DOMContentLoaded', () => {
-    updateOrderStatus();
-    loadMenu();
-    updateCart();
+    loadUser();          // First: Check session (get_user.php)
+    updateOrderStatus(); // Show active order
+    loadMenu();          // Then: Load menu (get_menu.php)
+    updateCart();        // Initialize cart
 });

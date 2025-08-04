@@ -2,7 +2,12 @@
 require_once 'config.php';
 
 try {
-    $stmt = $pdo->prepare("SELECT itemID, name, description, price, category, available, imagePath FROM MenuItem WHERE available = 1 ORDER BY category, name");
+    $stmt = $pdo->prepare("
+        SELECT itemID, name, description, price, category, available, imagePath 
+        FROM MenuItem 
+        WHERE available = 1 
+        ORDER BY category, name
+    ");
     $stmt->execute();
     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -14,7 +19,8 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Failed to load menu.'
+        'message' => 'Failed to load menu.',
+        'error' => $e->getMessage()  // For debugging
     ]);
 }
 ?>
