@@ -22,6 +22,8 @@
         <nav class="staff-nav">
             <button class="nav-btn active" data-tab="menu">Menu Management</button>
             <button class="nav-btn" data-tab="inventory">Inventory</button>
+            <button class="nav-btn" data-tab="sales">Sales Report</button>
+            <button class="nav-btn" data-tab="stock">Stock Report</button>
         </nav>
 
         <!-- Main Content -->
@@ -30,7 +32,7 @@
             <section id="menu" class="tab-content active">
                 <div class="section-header">
                     <h2>Manage Menu Items</h2>
-                    <button id="addItemBtn" class="btn-primary">+ Add New Item</button>
+                    <button id="addItemBtn" class="btn btn-primary">+ Add New Item</button>
                 </div>
 
                 <form id="itemForm" style="display: none;">
@@ -125,20 +127,25 @@
         <div class="modal" id="ordersModal" style="display: none;">
             <div class="modal-content">
                 <h3>Student Orders</h3>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Student ID</th>
-                            <th>Total (KES)</th>
-                            <th>Status</th>
-                            <th>Time</th>
-                            <th>Update</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ordersBody"></tbody>
-                </table>
-                <button onclick="closeModal()">Close</button>
+                <div class="modal-body">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+    
+                                <th>Order ID</th>
+                                <th>Student ID</th>
+                                <th>Total (KES)</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                                <th>Update</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersBody"></tbody>
+                    </table>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                </div>
             </div>
         </div>
     </div>

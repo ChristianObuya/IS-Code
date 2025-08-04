@@ -35,6 +35,8 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
         document.getElementById(tab).classList.add('active');
         if (tab === 'menu') loadMenuItems();
         if (tab === 'inventory') loadInventory();
+        if (tab === 'sales') loadSalesReport();
+        if (tab === 'stock') loadStockReport();
     });
 });
 
@@ -202,10 +204,12 @@ itemForm.addEventListener('submit', async (e) => {
 async function loadInventory() {
     try {
         const response = await fetch('../backend/get_inventory.php');
+        if (handleAuthError(response)) return;
+
         const result = await response.json();
 
         if (!result.success) {
-            inventoryList.innerHTML = `<tr><td colspan="5">Failed to load inventory.</td></tr>`;
+            inventoryList.innerHTML = `<tr><td colspan="6">Failed to load inventory.</td></tr>`;
             return;
         }
 
@@ -219,12 +223,143 @@ async function loadInventory() {
                 <td>${inv.stockQuantity}</td>
                 <td>${inv.lowStockThreshold}</td>
                 <td><strong class="${status === 'Low Stock' ? 'low-stock' : ''}">${status}</strong></td>
+                <td>
+                    <div class="stock-update-form">
+                        <input type="number" class="stock-input" placeholder="Qty" min="1" step="1">
+                        <button class="btn-add-stock" data-id="${inv.itemID}">Add</button>
+                    </div>
+                </td>
             `;
             inventoryList.appendChild(tr);
         });
+
+        // Add event listeners for the new buttons
+        document.querySelectorAll('.btn-add-stock').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const itemID = e.target.dataset.id;
+                const quantityInput = e.target.previousElementSibling;
+                const quantity = parseInt(quantityInput.value, 10);
+
+                if (quantity > 0) {
+                    updateStock(itemID, quantity);
+                } else {
+                    alert('Please enter a valid quantity to add.');
+                }
+            });
+        });
+
     } catch (error) {
-        inventoryList.innerHTML = `<tr><td colspan="5">Network error.</td></tr>`;
+        inventoryList.innerHTML = `<tr><td colspan="6">Network error.</td></tr>`;
         console.error('Load inventory error:', error);
+    }
+}
+
+// New function to update stock
+async function updateStock(itemID, quantity) {
+    try {
+        const response = await fetch('../backend/update_inventory.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `itemID=${itemID}&quantity=${quantity}`
+        });
+
+        if (handleAuthError(response)) return;
+
+        const result = await response.json();
+        if (result.success) {
+            loadInventory(); // Refresh the list on success
+        } else {
+            alert('Failed to update stock: ' + result.message);
+        }
+    } catch (error) {
+        alert('A network error occurred while updating stock.');
+        console.error('Update stock error:', error);
+    }
+}
+
+// Function to load Sales Report
+async function loadSalesReport() {
+    const salesReportContent = document.getElementById('salesReportContent');
+    const salesStartDate = document.getElementById('salesStartDate').value;
+    const salesEndDate = document.getElementById('salesEndDate').value;
+
+    salesReportContent.innerHTML = '<p class="loading">Loading sales report...</p>';
+
+    try {
+        let url = `../backend/get_sales_report.php?startDate=${salesStartDate}&endDate=${salesEndDate}`;
+        const response = await fetch(url);
+        if (handleAuthError(response)) return;
+
+        const result = await response.json();
+
+        if (!result.success) {
+            salesReportContent.innerHTML = `<p class="error">Failed to load sales report: ${result.message}</p>`;
+            return;
+        }
+
+        const salesData = result.data;
+        if (salesData.length === 0) {
+            salesReportContent.innerHTML = '<p>No sales data available for the selected date range.</p>';
+            return;
+        }
+
+        let tableHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Total Sales (KES)</th>
+                        <th>Order Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        salesData.forEach(day => {
+            tableHTML += `
+                <tr>
+                    <td>${day.saleDate}</td>
+                    <td>${parseFloat(day.totalSales).toFixed(2)}</td>
+                    <td>${day.orderCount}</td>
+                </tr>
+            `;
+        });
+        tableHTML += `</tbody></table>`;
+
+        salesReportContent.innerHTML = tableHTML;
+
+    } catch (error) {
+        salesReportContent.innerHTML = '<p class="error">Network error while loading sales report.</p>';
+        console.error('Sales report error:', error);
+    }
+}
+
+// Add event listener for the "Generate" button
+document.getElementById('generateSalesReport').addEventListener('click', loadSalesReport);
+
+// Function to load Stock Report
+async function loadStockReport() {
+    const stockReportContent = document.getElementById('stockReportContent');
+    stockReportContent.innerHTML = '<p class="loading">Loading stock report...</p>';
+
+    try {
+        const response = await fetch('../backend/get_stock_report.php');
+        if (handleAuthError(response)) return;
+
+        const result = await response.json();
+
+        if (!result.success) {
+            stockReportContent.innerHTML = `<p class="error">Failed to load stock report: ${result.message}</p>`;
+            return;
+        }
+
+        const stockData = result.data;
+
+        // Render stock data
+        stockReportContent.innerHTML = renderStockReportTable(stockData);
+
+    } catch (error) {
+        stockReportContent.innerHTML = '<p class="error">Network error while loading stock report.</p>';
+        console.error('Stock report error:', error);
     }
 }
 
@@ -249,6 +384,7 @@ viewOrdersBtn.addEventListener('click', async () => {
             const tr = document.createElement('tr');
             tr.id = `order-row-${order.orderID}`; // Add an ID to the row for easy removal
             tr.innerHTML = `
+
                 <td>${order.orderID}</td>
                 <td>${order.studentID}</td>
                 <td>KES ${parseFloat(order.totalAmount).toFixed(2)}</td>

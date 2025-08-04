@@ -46,6 +46,36 @@ body {
     font-size: 14px;
 }
 
+/* Generic Button Styles */
+.btn {
+    display: inline-block;
+    padding: 10px 25px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    text-align: center;
+    transition: background-color 0.3s ease;
+    line-height: 1.5; /* Ensure consistent height */
+}
+
+.btn-primary {
+    background: #003366;
+    color: white;
+}
+.btn-primary:hover {
+    background: #00254d;
+}
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
 /* Hero */
 .hero {
     text-align: center;
@@ -100,20 +130,6 @@ body {
 .receipt-actions {
     text-align: center;
     margin-top: 30px;
-}
-
-.receipt-actions a {
-    display: inline-block;
-    padding: 10px 25px;
-    background: #003366; /* Blue background */
-    color: white;
-    text-decoration: none;
-    border-radius: 6px; /* Curved corners */
-    font-size: 16px;
-    transition: background-color 0.3s ease;
-}
-.receipt-actions a:hover {
-    background: #00254d;
 }
 
 /* Status Banner */
@@ -349,6 +365,29 @@ body {
     border-radius: 8px;
     width: 90%;
     max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh; /* Limit height to 80% of the viewport height */
+}
+
+.modal-content h3 {
+    flex-shrink: 0; /* Prevent header from shrinking */
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 15px;
+}
+
+.modal-body {
+    overflow-y: auto; /* Make this area scrollable */
+    flex-grow: 1;   /* Allow it to take up available space */
+}
+
+.modal-actions {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    text-align: right;
+    flex-shrink: 0; /* Prevent footer from shrinking */
 }
 
 .order-item {
@@ -422,20 +461,6 @@ body {
 .section-header h2 {
     color: #003366;
     margin: 0;
-}
-
-.btn-primary {
-    padding: 10px 16px;
-    background: #003366;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.btn-primary:hover {
-    background: #00254d;
 }
 
 /* Form Styling */
@@ -539,4 +564,35 @@ body {
 .low-stock {
     color: #e74c3c;
     font-weight: bold;
+}
+
+/* Report Styles */
+.report-filters {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+
+/* Stock Update Form in Inventory Table */
+.stock-update-form {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.stock-input {
+    width: 60px;
+    padding: 5px;
+}
+
+.btn-add-stock {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
 }

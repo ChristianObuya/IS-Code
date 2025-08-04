@@ -9,12 +9,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+$userID = trim($_POST['userID'] ?? '');
 $name = trim($_POST['name'] ?? '');
 $email = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
 $role = trim($_POST['role'] ?? '');
 
-if (empty($name) || empty($email) || empty($password) || empty($role)) {
+if (empty($userID) || empty($name) || empty($email) || empty($password) || empty($role)) {
     echo json_encode(['success' => false, 'message' => 'All fields are required.']);
     exit;
 }
@@ -35,6 +36,15 @@ if (!in_array($role, ['student', 'staff'])) {
 }
 
 try {
+    // Check if userID already exists
+    $stmt = $pdo->prepare("SELECT userID FROM Users WHERE userID = ?");
+    $stmt->execute([$userID]);
+    if ($stmt->fetch()) {
+        echo json_encode(['success' => false, 'message' => 'This ID is already registered.']);
+        exit;
+    }
+
+    // Check if email already exists
     $stmt = $pdo->prepare("SELECT userID FROM Users WHERE email = ?");
     $stmt->execute([$email]);
     if ($stmt->fetch()) {
@@ -46,16 +56,15 @@ try {
 
     $pdo->beginTransaction();
 
-    $stmt = $pdo->prepare("INSERT INTO Users (name, email, passwordHash, role) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$name, $email, $passwordHash, $role]);
-    $newUserID = $pdo->lastInsertId();
+    $stmt = $pdo->prepare("INSERT INTO Users (userID, name, email, passwordHash, role) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$userID, $name, $email, $passwordHash, $role]);
 
     if ($role === 'staff') {
         $roleStmt = $pdo->prepare("INSERT INTO CanteenStaff (staffID) VALUES (?)");
-        $roleStmt->execute([$newUserID]);
+        $roleStmt->execute([$userID]);
     } elseif ($role === 'student') {
         $roleStmt = $pdo->prepare("INSERT INTO Student (studentID) VALUES (?)");
-        $roleStmt->execute([$newUserID]);
+        $roleStmt->execute([$userID]);
     }
 
     $pdo->commit();

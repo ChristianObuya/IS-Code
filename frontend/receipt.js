@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     isFirstFetch = false;
                 }
 
+
                 // Display completion time if available, otherwise show a placeholder
                 if (result.completionTime) {
                     completionTimeEl.textContent = new Date(result.completionTime).toLocaleString();

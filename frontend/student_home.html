@@ -57,10 +57,14 @@
     <div class="modal" id="ordersModal" style="display: none;">
         <div class="modal-content">
             <h3>My Orders</h3>
-            <div id="ordersList">
-                <p>No orders placed yet.</p>
+            <div class="modal-body">
+                <div id="ordersList">
+                    <p>No orders placed yet.</p>
+                </div>
             </div>
-            <button onclick="closeModal()">Close</button>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+            </div>
         </div>
     </div>
 

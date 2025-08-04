@@ -31,25 +31,37 @@ try {
     // Start transaction
     $pdo->beginTransaction();
 
-    // Verify student exists
-    $stmt = $pdo->prepare("SELECT * FROM Student WHERE studentID = ?");
-    $stmt->execute([$studentID]);
-    if ($stmt->rowCount() === 0) {
-        throw new Exception("Invalid student ID: $studentID");
+    // --- Stock Verification Step ---
+    // Lock inventory rows for the items in the cart to prevent race conditions
+    $itemIDs = array_map(fn($item) => (int)$item['id'], $items);
+    $placeholders = implode(',', array_fill(0, count($itemIDs), '?'));
+    
+    $stockCheckStmt = $pdo->prepare("SELECT itemID, stockQuantity FROM Inventory WHERE itemID IN ($placeholders) FOR UPDATE");
+    $stockCheckStmt->execute($itemIDs);
+    $currentStock = $stockCheckStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+    foreach ($items as $item) {
+        $itemID = (int)$item['id'];
+        $quantityNeeded = (int)$item['quantity'];
+        if (!isset($currentStock[$itemID]) || $currentStock[$itemID] < $quantityNeeded) {
+            throw new Exception("Insufficient stock for item ID #{$itemID}. Please adjust your cart.");
+        }
     }
 
-    // Insert into `Order`
+    // --- Create Order and OrderItems (if stock is sufficient) ---
     $stmt = $pdo->prepare("INSERT INTO `Order` (studentID, totalAmount, status) VALUES (?, ?, 'pending')");
     $stmt->execute([$studentID, $totalAmount]);
     $orderID = $pdo->lastInsertId();
 
-    // Insert each item into `OrderItem`
     $itemStmt = $pdo->prepare("INSERT INTO OrderItem (orderID, itemID, quantity) VALUES (?, ?, ?)");
+    $stockUpdateStmt = $pdo->prepare("UPDATE Inventory SET stockQuantity = stockQuantity - ? WHERE itemID = ?");
+
     foreach ($items as $item) {
         $itemID = (int)$item['id'];
         $quantity = (int)$item['quantity'];
         if ($quantity > 0) {
             $itemStmt->execute([$orderID, $itemID, $quantity]);
+            $stockUpdateStmt->execute([$quantity, $itemID]); // Decrease stock
         }
     }
 
