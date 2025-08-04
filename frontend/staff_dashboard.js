@@ -10,16 +10,15 @@ const itemDesc = document.getElementById('itemDesc');
 const itemPrice = document.getElementById('itemPrice');
 const itemCategory = document.getElementById('itemCategory');
 const itemAvailable = document.getElementById('itemAvailable');
-const menuTable = document.getElementById('menuTable');
 const addItemBtn = document.getElementById('addItemBtn');
 const cancelBtn = document.getElementById('cancelBtn');
 const ordersModal = document.getElementById('ordersModal');
 const viewOrdersBtn = document.getElementById('viewOrdersBtn');
 
 // Tab Switching
-document.querySelectorAll('.tab-btn').forEach(btn => {
+document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         const tab = btn.dataset.tab;
@@ -35,7 +34,7 @@ addItemBtn.addEventListener('click', () => {
     itemForm.reset();
     itemID.value = '';
     itemForm.style.display = 'block';
-    menuTable.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('menuTable').scrollIntoView({ behavior: 'smooth' });
 });
 
 // Cancel Form
@@ -50,12 +49,12 @@ async function loadMenuItems() {
         const result = await response.json();
 
         if (!result.success) {
-            menuList.innerHTML = `<tr><td colspan="7">Failed to load menu.</td></tr>`;
+            menuList.innerHTML = `<tr><td colspan="6">Failed to load menu.</td></tr>`;
             return;
         }
 
         if (result.data.length === 0) {
-            menuList.innerHTML = `<tr><td colspan="7">No menu items available.</td></tr>`;
+            menuList.innerHTML = `<tr><td colspan="6">No menu items available.</td></tr>`;
             return;
         }
 
@@ -65,7 +64,6 @@ async function loadMenuItems() {
             tr.innerHTML = `
                 <td>${item.itemID}</td>
                 <td>${item.name}</td>
-                <td>${item.description || '-'}</td>
                 <td>KES ${parseFloat(item.price).toFixed(2)}</td>
                 <td>${item.category || 'Unknown'}</td>
                 <td>${item.available ? 'Yes' : 'No'}</td>
@@ -79,21 +77,15 @@ async function loadMenuItems() {
 
         // Add event listeners
         document.querySelectorAll('.btn-edit').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.target.dataset.id;
-                editItem(id);
-            });
+            btn.addEventListener('click', (e) => editItem(e.target.dataset.id));
         });
 
         document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.target.dataset.id;
-                deleteItem(id);
-            });
+            btn.addEventListener('click', (e) => deleteItem(e.target.dataset.id));
         });
 
     } catch (error) {
-        menuList.innerHTML = `<tr><td colspan="7">Network error.</td></tr>`;
+        menuList.innerHTML = `<tr><td colspan="6">Network error.</td></tr>`;
         console.error('Load menu error:', error);
     }
 }
@@ -114,7 +106,7 @@ async function editItem(id) {
             itemCategory.value = item.category || '';
             itemAvailable.value = item.available;
             itemForm.style.display = 'block';
-            menuTable.scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('menuTable').scrollIntoView({ behavior: 'smooth' });
         }
     } catch (error) {
         alert('Failed to load item for editing.');

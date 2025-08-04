@@ -18,100 +18,110 @@
             </div>
         </header>
 
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="menu">Menu Management</button>
-            <button class="tab-btn" data-tab="inventory">Inventory</button>
-        </div>
+        <!-- Horizontal Navigation Tabs -->
+        <nav class="staff-nav">
+            <button class="nav-btn active" data-tab="menu">Menu Management</button>
+            <button class="nav-btn" data-tab="inventory">Inventory</button>
+        </nav>
 
-        <!-- Menu Management Tab -->
-        <section id="menu" class="tab-content active">
-            <div class="section-header">
-                <h2>Manage Menu Items</h2>
-                <button id="addItemBtn" class="btn-primary">+ Add New Item</button>
-            </div>
+        <!-- Main Content -->
+        <main class="main-content staff-main">
+            <!-- Menu Management Tab -->
+            <section id="menu" class="tab-content active">
+                <div class="section-header">
+                    <h2>Manage Menu Items</h2>
+                    <button id="addItemBtn" class="btn-primary">+ Add New Item</button>
+                </div>
 
-            <!-- Add/Edit Item Form -->
-            <form id="itemForm" style="display: none;">
-                <h3 id="formTitle">Add New Item</h3>
-                <input type="hidden" id="itemID">
+                <!-- Add/Edit Form -->
+                <form id="itemForm" style="display: none;">
+                    <h3 id="formTitle">Add New Item</h3>
+                    <input type="hidden" id="itemID">
 
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" id="itemName" required />
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="itemDesc" rows="2"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Price (KES)</label>
-                    <input type="number" id="itemPrice" step="0.01" min="0" required />
-                </div>
-                <div class="form-group">
-                    <label>Category</label>
-                    <select id="itemCategory" required>
-                        <option value="">Select Category</option>
-                        <option value="main">Main Course</option>
-                        <option value="snack">Snack</option>
-                        <option value="beverage">Beverage</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Available</label>
-                    <select id="itemAvailable">
-                        <option value="1">Yes</option>
-                        <option value="0">No</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Image</label>
-                    <input type="file" id="itemImage" accept="image/*" />
-                    <small>Leave blank to keep current image</small>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn-success">Save Item</button>
-                    <button type="button" id="cancelBtn" class="btn-cancel">Cancel</button>
-                </div>
-            </form>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" id="itemName" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Price (KES)</label>
+                            <input type="number" id="itemPrice" step="0.01" min="0" required />
+                        </div>
+                    </div>
 
-            <!-- Menu Items Table -->
-            <table class="data-table" id="menuTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Price</th>
-                        <th>Category</th>
-                        <th>Available</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="menuList">
-                    <tr><td colspan="7" class="loading">Loading menu...</td></tr>
-                </tbody>
-            </table>
-        </section>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select id="itemCategory" required>
+                                <option value="">Select Category</option>
+                                <option value="main">Main Course</option>
+                                <option value="snack">Snack</option>
+                                <option value="beverage">Beverage</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Available</label>
+                            <select id="itemAvailable">
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
 
-        <!-- Inventory Tab -->
-        <section id="inventory" class="tab-content">
-            <h2>Inventory Levels</h2>
-            <table class="data-table" id="inventoryTable">
-                <thead>
-                    <tr>
-                        <th>Item ID</th>
-                        <th>Item Name</th>
-                        <th>Current Stock</th>
-                        <th>Low Stock Threshold</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="inventoryList">
-                    <tr><td colspan="5" class="loading">Loading inventory...</td></tr>
-                </tbody>
-            </table>
-        </section>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="itemDesc" rows="2"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Image</label>
+                        <input type="file" id="itemImage" accept="image/*" />
+                        <small>Leave blank to keep current image</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-success">Save Item</button>
+                        <button type="button" id="cancelBtn" class="btn-cancel">Cancel</button>
+                    </div>
+                </form>
+
+                <!-- Menu Table -->
+                <table class="data-table" id="menuTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Category</th>
+                            <th>Available</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="menuList">
+                        <tr><td colspan="6" class="loading">Loading menu...</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Inventory Tab -->
+            <section id="inventory" class="tab-content">
+                <h2>Inventory Levels</h2>
+                <table class="data-table" id="inventoryTable">
+                    <thead>
+                        <tr>
+                            <th>Item ID</th>
+                            <th>Item Name</th>
+                            <th>Stock</th>
+                            <th>Threshold</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryList">
+                        <tr><td colspan="5" class="loading">Loading inventory...</td></tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
 
         <!-- Orders Modal -->
         <div class="modal" id="ordersModal" style="display: none;">
@@ -125,11 +135,11 @@
                             <th>Total (KES)</th>
                             <th>Status</th>
                             <th>Time</th>
-                            <th>Update Status</th>
+                            <th>Update</th>
                         </tr>
                     </thead>
                     <tbody id="ordersBody">
-                        <!-- Orders loaded dynamically -->
+                        <!-- Loaded dynamically -->
                     </tbody>
                 </table>
                 <button onclick="closeModal()">Close</button>
