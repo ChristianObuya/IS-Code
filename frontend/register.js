@@ -1,7 +1,6 @@
 document.getElementById('registerForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
-    const userID = document.getElementById('userID').value;
     const name = document.getElementById('name').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -17,7 +16,7 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: `userID=${encodeURIComponent(userID)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&role=${encodeURIComponent(role)}`
+            body: `name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&role=${encodeURIComponent(role)}`
         });
 
         const result = await response.json();

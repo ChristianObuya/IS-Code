@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once 'config.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -9,13 +10,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $input = json_decode(file_get_contents('php://input'), true);
 
+// Security: User must be a logged-in student to place an order.
+if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'student') {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Access denied. Please log in as a student.']);
+    exit;
+}
+
 // Validate required fields
-if (!isset($input['studentID']) || !isset($input['items']) || !isset($input['totalAmount'])) {
+if (!isset($input['items']) || !isset($input['totalAmount'])) {
     echo json_encode(['success' => false, 'message' => 'Missing required data.']);
     exit;
 }
 
-$studentID = (int)$input['studentID'];
+$studentID = (int)$_SESSION['userID']; // Use session for security
 $totalAmount = floatval($input['totalAmount']);
 $items = $input['items'];
 

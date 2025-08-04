@@ -21,12 +21,18 @@
                 <h2>Payment Confirmed</h2>
                 <p>Your order is being prepared. Collect when status is <strong>Ready</strong>.</p>
 
+                <!-- Live Status Banner -->
+                <div class="status-banner" id="receiptStatusBanner" style="margin-top: 20px; margin-bottom: 20px;">
+                    <p><strong>Order Status:</strong> <span id="orderStatusText">Loading...</span></p>
+                </div>
+
                 <div class="receipt-section">
                     <h3>Receipt Details</h3>
                     <table class="receipt-table">
                         <tr><th>Receipt ID</th><td id="receiptID">-</td></tr>
                         <tr><th>Order ID</th><td id="orderID">-</td></tr>
-                        <tr><th>Date & Time</th><td id="receiptTime">-</td></tr>
+                        <tr><th>Order Placed</th><td id="receiptTime">-</td></tr>
+                        <tr><th>Order Completed</th><td id="completionTime">-</td></tr>
                         <tr><th>Payment Method</th><td>M-Pesa</td></tr>
                         <tr><th>Transaction ID</th><td id="transactionID">-</td></tr>
                     </table>
@@ -41,7 +47,7 @@
                 </div>
 
                 <div class="receipt-actions">
-                    <a href="student_home.html">Continue Shopping</a>
+                    <a href="student_home.html">Browse Menu</a>
                 </div>
             </div>
         </main>

@@ -1,39 +1,34 @@
-document.getElementById('loginForm').addEventListener('submit', async function (e) {
+const loginForm = document.getElementById('loginForm');
+const message = document.getElementById('message');
+
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    message.textContent = '';
+    message.style.color = 'red';
 
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const messageEl = document.getElementById('message');
-
-    messageEl.textContent = '';
-    messageEl.style.color = 'red';
 
     try {
         const response = await fetch('../backend/login.php', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
         });
 
         const result = await response.json();
 
         if (result.success) {
-            messageEl.style.color = 'green';
-            messageEl.textContent = `Welcome, ${result.name}!`;
-            setTimeout(() => {
-                if (result.role === 'student') {
-                    window.location.href = 'student_home.html';
-                } else {
-                    window.location.href = 'staff_dashboard.html';
-                }
-            }, 1000);
+            if (result.role === 'student') {
+                window.location.href = 'student_home.html';
+            } else if (result.role === 'staff') {
+                window.location.href = 'staff_dashboard.html';
+            }
         } else {
-            messageEl.textContent = result.message;
+            message.textContent = result.message; // Show real error
         }
     } catch (error) {
-        messageEl.textContent = 'An error occurred. Please try again.';
+        message.textContent = 'Network error. Check console.';
         console.error('Login error:', error);
     }
 });

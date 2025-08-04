@@ -6,14 +6,10 @@ const checkoutBtn = document.getElementById('checkoutBtn');
 const ordersBtn = document.getElementById('ordersBtn');
 const ordersModal = document.getElementById('ordersModal');
 const ordersList = document.getElementById('ordersList');
-const statusBanner = document.getElementById('statusBanner');
-const orderStatusText = document.getElementById('orderStatusText');
-const orderTime = document.getElementById('orderTime');
 
 // Cart State
 let cart = [];
 let userOrders = JSON.parse(localStorage.getItem('userOrders')) || [];
-let currentOrder = userOrders.length > 0 ? userOrders[userOrders.length - 1] : null;
 let studentID = null;
 
 // 1. Load User Session (from login)
@@ -31,15 +27,6 @@ async function loadUser() {
     } catch (error) {
         console.error('Session error:', error);
         window.location.href = 'index.html';
-    }
-}
-
-// 2. Display Current Order Status
-function updateOrderStatus() {
-    if (currentOrder && currentOrder.status !== 'collected') {
-        statusBanner.style.display = 'block';
-        orderStatusText.textContent = currentOrder.status;
-        orderTime.textContent = `Placed at ${currentOrder.time}`;
     }
 }
 
@@ -231,7 +218,6 @@ checkoutBtn.addEventListener('click', async () => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                studentID: studentID,
                 totalAmount: orderData.total,
                 items: orderData.items.map(item => ({
                     id: item.id,
@@ -244,7 +230,8 @@ checkoutBtn.addEventListener('click', async () => {
 
         if (result.success) {
             console.log('Order saved with ID:', result.orderID);
-            window.location.href = 'student_payment.html';
+            // Pass the real order ID to the payment page
+            window.location.href = `student_payment.html?orderID=${result.orderID}`;
         } else {
             alert('Failed to place order: ' + result.message);
         }
@@ -266,7 +253,6 @@ document.querySelectorAll('.nav-btn, .filter-btn').forEach(btn => {
 //11. On Page Load
 document.addEventListener('DOMContentLoaded', () => {
     loadUser();          // First: Check session (get_user.php)
-    updateOrderStatus(); // Show active order
     loadMenu();          // Then: Load menu (get_menu.php)
     updateCart();        // Initialize cart
 });

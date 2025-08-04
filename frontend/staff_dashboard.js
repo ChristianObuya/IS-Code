@@ -15,6 +15,16 @@ const cancelBtn = document.getElementById('cancelBtn');
 const ordersModal = document.getElementById('ordersModal');
 const viewOrdersBtn = document.getElementById('viewOrdersBtn');
 
+// --- Helper Functions ---
+function handleAuthError(response) {
+    if (response.status === 403) {
+        alert('Your session has expired or you are not authorized. Please log in again.');
+        window.location.href = 'staff_login.html';
+        return true; // Indicates an auth error was handled
+    }
+    return false;
+}
+
 // Tab Switching
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -92,21 +102,28 @@ async function loadMenuItems() {
 
 // Edit Item
 async function editItem(id) {
+    // Note: The backend script get_menu.php does not support fetching a single item.
+    // This function will fetch all available items and find the correct one.
     try {
-        const response = await fetch(`../backend/get_menu.php?id=${id}`);
+        const response = await fetch(`../backend/get_menu.php`);
         const result = await response.json();
 
         if (result.success && result.data.length > 0) {
-            const item = result.data[0];
-            formTitle.textContent = 'Edit Item';
-            itemID.value = item.itemID;
-            itemName.value = item.name;
-            itemDesc.value = item.description || '';
-            itemPrice.value = item.price;
-            itemCategory.value = item.category || '';
-            itemAvailable.value = item.available;
-            itemForm.style.display = 'block';
-            document.getElementById('menuTable').scrollIntoView({ behavior: 'smooth' });
+            const itemToEdit = result.data.find(item => item.itemID == id);
+
+            if (itemToEdit) {
+                formTitle.textContent = 'Edit Item';
+                itemID.value = itemToEdit.itemID;
+                itemName.value = itemToEdit.name;
+                itemDesc.value = itemToEdit.description || '';
+                itemPrice.value = itemToEdit.price;
+                itemCategory.value = itemToEdit.category || '';
+                itemAvailable.value = itemToEdit.available;
+                itemForm.style.display = 'block';
+                document.getElementById('menuTable').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert('Error: Could not find the selected item to edit.');
+            }
         }
     } catch (error) {
         alert('Failed to load item for editing.');
@@ -116,7 +133,9 @@ async function editItem(id) {
 
 // Delete Item
 async function deleteItem(id) {
-    if (!confirm('Are you sure you want to delete this menu item?')) return;
+    if (!confirm('Are you sure you want to delete this menu item? This action cannot be undone.')) {
+        return;
+    }
 
     try {
         const response = await fetch('../backend/manage_menu.php', {
@@ -125,15 +144,17 @@ async function deleteItem(id) {
             body: `action=delete&id=${id}`
         });
 
+        if (handleAuthError(response)) return;
+
         const result = await response.json();
-        if (result.success) {
-            loadMenuItems();
-        } else {
+        if (!result.success) {
             alert('Delete failed: ' + result.message);
+        } else {
+            loadMenuItems(); // Refresh the list
         }
     } catch (error) {
-        alert('Network error.');
-        console.error(error);
+        alert('A network error occurred while trying to delete the item.');
+        console.error('Delete item error:', error);
     }
 }
 
@@ -160,6 +181,8 @@ itemForm.addEventListener('submit', async (e) => {
             method: 'POST',
             body: formData  // Uses multipart/form-data
         });
+
+        if (handleAuthError(response)) return;
 
         const result = await response.json();
         if (result.success) {
@@ -212,6 +235,8 @@ viewOrdersBtn.addEventListener('click', async () => {
 
     try {
         const response = await fetch('../backend/get_orders.php');
+        if (handleAuthError(response)) return;
+
         const result = await response.json();
 
         if (!result.success || result.data.length === 0) {
@@ -222,6 +247,7 @@ viewOrdersBtn.addEventListener('click', async () => {
         ordersBody.innerHTML = '';
         result.data.forEach(order => {
             const tr = document.createElement('tr');
+            tr.id = `order-row-${order.orderID}`; // Add an ID to the row for easy removal
             tr.innerHTML = `
                 <td>${order.orderID}</td>
                 <td>${order.studentID}</td>
@@ -264,13 +290,31 @@ async function updateOrderStatus(orderID, status) {
             body: `orderID=${orderID}&status=${status}`
         });
 
+        if (handleAuthError(response)) return;
+
         const result = await response.json();
+
+        // Handle other errors reported by the server
         if (!result.success) {
-            alert('Failed to update status.');
+            alert('Update failed: ' + result.message);
+            console.error('Server response:', result); // Log full details for debugging
+        } else {
+            // The status was updated successfully. No alert is needed,
+            // as the user can see the change in the dropdown.
+            console.log('Status updated successfully for order ' + orderID);
+
+            // If status is 'collected', remove the row from the view after a short delay
+            if (status === 'collected') {
+                const rowToRemove = document.getElementById(`order-row-${orderID}`);
+                if (rowToRemove) {
+                    rowToRemove.style.opacity = '0';
+                    setTimeout(() => rowToRemove.remove(), 500);
+                }
+            }
         }
     } catch (error) {
-        alert('Network error.');
-        console.error(error);
+        alert('A network error occurred. Please check your connection and try again.');
+        console.error('Update status fetch error:', error);
     }
 }
 
