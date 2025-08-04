@@ -571,6 +571,16 @@ body {
     font-weight: bold;
 }
 
+.btn-activate {
+    background: #2ecc71; /* A nice green for activation */
+    color: white;
+}
+
+.item-unavailable {
+    background-color: #f8f9f9;
+    color: #95a5a6;
+}
+
 /* Report Styles */
 .report-filters {
     display: flex;

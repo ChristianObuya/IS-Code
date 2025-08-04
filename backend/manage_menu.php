@@ -111,28 +111,21 @@ try {
 
     if ($action === 'delete') {
         $id = (int)$_POST['id'];
-        $pdo->beginTransaction();
 
-        // Delete image file (optional)
-        $stmt = $pdo->prepare("SELECT imagePath FROM MenuItem WHERE itemID = ?");
+        // This is now a "soft delete" or "toggle availability" action
+        // to preserve data integrity with past orders.
+        $stmt = $pdo->prepare("SELECT available FROM MenuItem WHERE itemID = ?");
         $stmt->execute([$id]);
-        $row = $stmt->fetch();
-        if ($row && $row['imagePath'] && !str_contains($row['imagePath'], 'placeholder.jpg')) {
-            $filePath = '../frontend/' . $row['imagePath'];
-            if (file_exists($filePath)) {
-                unlink($filePath);
-            }
-        }
+        $currentStatus = $stmt->fetchColumn();
 
-        // Delete from Inventory and MenuItem
-        $stmt = $pdo->prepare("DELETE FROM Inventory WHERE itemID = ?");
-        $stmt->execute([$id]);
+        // Toggle the status
+        $newStatus = ($currentStatus == 1) ? 0 : 1;
 
-        $stmt = $pdo->prepare("DELETE FROM MenuItem WHERE itemID = ?");
-        $stmt->execute([$id]);
-
-        $pdo->commit();
-        echo json_encode(['success' => true, 'message' => 'Item deleted successfully.']);
+        $updateStmt = $pdo->prepare("UPDATE MenuItem SET available = ? WHERE itemID = ?");
+        $updateStmt->execute([$newStatus, $id]);
+        
+        $message = $newStatus == 1 ? 'Item activated successfully.' : 'Item deactivated successfully.';
+        echo json_encode(['success' => true, 'message' => $message]);
     }
 } catch (Exception $e) {
     if ($pdo->inTransaction()) $pdo->rollback();

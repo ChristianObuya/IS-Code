@@ -57,7 +57,8 @@ cancelBtn.addEventListener('click', () => {
 // Load Menu Items
 async function loadMenuItems() {
     try {
-        const response = await fetch('../backend/get_menu.php');
+        const response = await fetch('../backend/get_all_menu_items.php');
+        if (handleAuthError(response)) return;
         const result = await response.json();
 
         if (!result.success) {
@@ -73,26 +74,31 @@ async function loadMenuItems() {
         menuList.innerHTML = '';
         result.data.forEach(item => {
             const tr = document.createElement('tr');
+            tr.className = item.available ? '' : 'item-unavailable';
+
+            const availabilityText = item.available ? 'Yes' : 'No';
+            const toggleButtonText = item.available ? 'Deactivate' : 'Activate';
+            const toggleButtonClass = item.available ? 'btn-delete' : 'btn-activate';
+
             tr.innerHTML = `
                 <td>${item.itemID}</td>
                 <td>${item.name}</td>
                 <td>KES ${parseFloat(item.price).toFixed(2)}</td>
                 <td>${item.category || 'Unknown'}</td>
-                <td>${item.available ? 'Yes' : 'No'}</td>
+                <td>${availabilityText}</td>
                 <td>
                     <button class="btn-edit" data-id="${item.itemID}">Edit</button>
-                    <button class="btn-delete" data-id="${item.itemID}">Delete</button>
+                    <button class="${toggleButtonClass}" data-id="${item.itemID}">${toggleButtonText}</button>
                 </td>
             `;
             menuList.appendChild(tr);
         });
 
-        // Add event listeners
         document.querySelectorAll('.btn-edit').forEach(btn => {
             btn.addEventListener('click', (e) => editItem(e.target.dataset.id));
         });
 
-        document.querySelectorAll('.btn-delete').forEach(btn => {
+        document.querySelectorAll('.btn-delete, .btn-activate').forEach(btn => {
             btn.addEventListener('click', (e) => deleteItem(e.target.dataset.id));
         });
 
@@ -104,10 +110,9 @@ async function loadMenuItems() {
 
 // Edit Item
 async function editItem(id) {
-    // Note: The backend script get_menu.php does not support fetching a single item.
-    // This function will fetch all available items and find the correct one.
     try {
-        const response = await fetch(`../backend/get_menu.php`);
+        const response = await fetch(`../backend/get_all_menu_items.php`);
+        if (handleAuthError(response)) return;
         const result = await response.json();
 
         if (result.success && result.data.length > 0) {
@@ -135,7 +140,9 @@ async function editItem(id) {
 
 // Delete Item
 async function deleteItem(id) {
-    if (!confirm('Are you sure you want to delete this menu item? This action cannot be undone.')) {
+    const button = document.querySelector(`[data-id='${id}'].btn-delete, [data-id='${id}'].btn-activate`);
+    const actionText = button.textContent.toLowerCase();
+    if (!confirm(`Are you sure you want to ${actionText} this item?`)) {
         return;
     }
 
@@ -152,7 +159,7 @@ async function deleteItem(id) {
         if (!result.success) {
             alert('Delete failed: ' + result.message);
         } else {
-            loadMenuItems(); // Refresh the list
+            loadMenuItems();
         }
     } catch (error) {
         alert('A network error occurred while trying to delete the item.');
