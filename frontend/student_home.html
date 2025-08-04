@@ -30,30 +30,33 @@
                <span id="orderTime"></span></p>
         </section>
 
-        <!-- Menu Category Filter -->
-        <section class="filters">
-            <button class="filter-btn active" data-category="all">All Items</button>
-            <button class="filter-btn" data-category="main">Main Course</button>
-            <button class="filter-btn" data-category="snack">Snacks</button>
-            <button class="filter-btn" data-category="beverage">Beverages</button>
-        </section>
+        <!-- Horizontal Category Navbar -->
+        <nav class="category-nav">
+            <button class="nav-btn active" data-category="all">All Items</button>
+            <button class="nav-btn" data-category="main">Main Course</button>
+            <button class="nav-btn" data-category="snack">Snacks</button>
+            <button class="nav-btn" data-category="beverage">Beverages</button>
+        </nav>
 
-        <!-- Menu Items Grid -->
-        <section class="menu-grid" id="menuGrid">
-            <!-- Data loaded dynamically from backend -->
-        </section>
+        <!-- Main Content: Menu Grid + Cart Sidebar -->
+        <main class="main-content">
+            <!-- Menu Items Grid -->
+            <section class="menu-grid" id="menuGrid">
+                <p class="loading">Loading menu from canteen...</p>
+            </section>
 
-        <!-- Cart Sidebar -->
-        <aside class="cart-sidebar">
-            <h3>Your Order</h3>
-            <ul id="cartItems">
-                <li class="empty">Your cart is empty</li>
-            </ul>
-            <div class="cart-total">
-                <strong>Total: KES </strong><span id="cartTotal">0.00</span>
-            </div>
-            <button id="checkoutBtn" disabled>Proceed to Payment</button>
-        </aside>
+            <!-- Cart Sidebar -->
+            <aside class="cart-sidebar">
+                <h3>Your Order</h3>
+                <ul id="cartItems">
+                    <li class="empty">Your cart is empty</li>
+                </ul>
+                <div class="cart-total">
+                    <strong>Total: KES </strong><span id="cartTotal">0.00</span>
+                </div>
+                <button id="checkoutBtn" disabled>Proceed to Payment</button>
+            </aside>
+        </main>
     </div>
 
     <!-- Orders Modal -->

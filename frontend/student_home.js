@@ -58,7 +58,6 @@ async function loadMenu(category = 'all') {
             const menuItem = document.createElement('div');
             menuItem.className = 'menu-item';
 
-            // Use image path from DB, fallback to placeholder
             const imagePath = item.imagePath ? item.imagePath : 'images/placeholder.jpg';
 
             menuItem.innerHTML = `
@@ -112,7 +111,7 @@ function addToCart(item) {
     updateCart();
 }
 
-// Update Cart UI
+// Update Cart UI (with Delete Button)
 function updateCart() {
     cartItems.innerHTML = '';
     let total = 0;
@@ -129,14 +128,30 @@ function updateCart() {
             li.innerHTML = `
                 ${item.name} × ${item.quantity}
                 <span>KES ${(item.price * item.quantity).toFixed(2)}</span>
+                <button class="delete-item" data-id="${item.id}" title="Remove item">×</button>
             `;
             cartItems.appendChild(li);
-            total += item.price * item.quantity;
         });
         checkoutBtn.disabled = false;
     }
 
+    // Recalculate total
+    total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     cartTotal.textContent = total.toFixed(2);
+
+    // Add delete event listeners
+    document.querySelectorAll('.delete-item').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.dataset.id);
+            removeFromCart(id);
+        });
+    });
+}
+
+// Remove Item from Cart
+function removeFromCart(id) {
+    cart = cart.filter(item => item.id !== id);
+    updateCart();
 }
 
 // Open Orders Modal
@@ -186,16 +201,16 @@ checkoutBtn.addEventListener('click', () => {
     window.location.href = 'student_payment.html';
 });
 
-// Filter Menu
-document.querySelectorAll('.filter-btn').forEach(btn => {
+// Filter Menu by Category (Horizontal Nav)
+document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         loadMenu(btn.dataset.category);
     });
 });
 
-// On Load
+// On Page Load
 document.addEventListener('DOMContentLoaded', () => {
     updateOrderStatus();
     loadMenu();
