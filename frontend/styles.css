@@ -182,7 +182,7 @@ body {
 .menu-grid {
     flex: 3;
     display: grid;
-    grid-template-columns: repeat(auto-fit, 300px);
+    grid-template-columns: repeat(3, 1fr);
     gap: 15px;
 }
 
@@ -193,7 +193,8 @@ body {
     background: white;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s;
-    max-width: 300px;
+    max-width: 300px; /* Ensures items don't stretch too wide */
+    margin: 0 auto;   /* Centers the item within its grid column */
 }   
 
 .menu-item:hover {

@@ -72,16 +72,17 @@ async function loadMenuItems() {
         }
 
         menuList.innerHTML = '';
-        result.data.forEach(item => {
+        result.data.forEach((item, index) => {
             const tr = document.createElement('tr');
             tr.className = item.available ? '' : 'item-unavailable';
 
             const availabilityText = item.available ? 'Yes' : 'No';
             const toggleButtonText = item.available ? 'Deactivate' : 'Activate';
             const toggleButtonClass = item.available ? 'btn-delete' : 'btn-activate';
+            const displayId = index + 1; // Create a clean, sequential number for display
 
             tr.innerHTML = `
-                <td>${item.itemID}</td>
+                <td>${displayId}</td>
                 <td>${item.name}</td>
                 <td>KES ${parseFloat(item.price).toFixed(2)}</td>
                 <td>${item.category || 'Unknown'}</td>

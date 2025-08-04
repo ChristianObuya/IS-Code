@@ -71,7 +71,7 @@ async function loadMenu(category = 'all') {
 
             menuItem.innerHTML = `
                 <div class="menu-item-image">
-                    <img src="${imagePath}" alt="${item.name}" onerror="this.src='images/placeholder.jpg';">
+                    <img src="${imagePath}" alt="${item.name}" onerror="console.error('Image not found at \'${imagePath}\'. Loading placeholder.'); this.src='images/placeholder.jpg';">
                 </div>
                 <h4>${item.name}</h4>
                 <p class="desc">${item.description || 'No description available.'}</p>
