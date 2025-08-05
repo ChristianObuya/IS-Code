@@ -1,0 +1,32 @@
+# Composer dependencies
+# This directory contains third-party libraries managed by Composer.
+# It should never be committed to version control.
+/vendor/
+
+# Configuration files
+# This file contains sensitive information like database passwords.
+# A template file (e.g., config.php.example) should be committed instead.
+/backend/config.php
+
+# Environment-specific files
+.env
+.env.local
+.env.*.local
+
+# Log files
+*.log
+/logs/
+
+# Operating System generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE/Editor specific files
+.idea/
+.vscode/
+*.swp

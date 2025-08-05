@@ -1,0 +1,28 @@
+# Composer dependencies
+/vendor/
+
+# Configuration file with sensitive credentials.
+# It's a best practice to commit a template file instead (see below).
+
+# Environment-specific files
+.env
+.env.local
+.env.*.local
+
+# Log files
+*.log
+/logs/
+
+# Operating System generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE/Editor specific files
+.idea/
+.vscode/
+*.swp
