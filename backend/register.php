@@ -1,81 +1,64 @@
 <?php
-require_once 'config.php';
+session_start();
+include 'config.php';
 
-header('Content-Type: application/json');
+$success = '';
+$error = '';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method Not Allowed']);
-    exit;
-}
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $userID = isset($_POST['userID']) ? trim($_POST['userID']) : '';
+    $name = isset($_POST['name']) ? trim($_POST['name']) : '';
+    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $password = isset($_POST['password']) ? $_POST['password'] : '';
+    $role = isset($_POST['role']) ? trim($_POST['role']) : '';
 
-$userID = trim($_POST['userID'] ?? '');
-$name = trim($_POST['name'] ?? '');
-$email = trim($_POST['email'] ?? '');
-$password = $_POST['password'] ?? '';
-$role = trim($_POST['role'] ?? '');
-
-if (empty($userID) || empty($name) || empty($email) || empty($password) || empty($role)) {
-    echo json_encode(['success' => false, 'message' => 'All fields are required.']);
-    exit;
-}
-
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['success' => false, 'message' => 'Invalid email format.']);
-    exit;
-}
-
-if (strlen($password) < 6) {
-    echo json_encode(['success' => false, 'message' => 'Password must be at least 6 characters long.']);
-    exit;
-}
-
-if (!in_array($role, ['student', 'staff'])) {
-    echo json_encode(['success' => false, 'message' => 'Invalid role selected.']);
-    exit;
-}
-
-try {
-    // Check if userID already exists
-    $stmt = $pdo->prepare("SELECT userID FROM Users WHERE userID = ?");
-    $stmt->execute([$userID]);
-    if ($stmt->fetch()) {
-        echo json_encode(['success' => false, 'message' => 'This ID is already registered.']);
-        exit;
+    if (empty($userID) || empty($name) || empty($email) || empty($password) || empty($role)) {
+        $error = 'All fields are required.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = 'Invalid email format.';
+    } elseif (strlen($password) < 6) {
+        $error = 'Password must be at least 6 characters long.';
+    } elseif (!in_array($role, ['student', 'staff'])) {
+        $error = 'Invalid role selected.';
     }
 
-    // Check if email already exists
-    $stmt = $pdo->prepare("SELECT userID FROM Users WHERE email = ?");
-    $stmt->execute([$email]);
-    if ($stmt->fetch()) {
-        echo json_encode(['success' => false, 'message' => 'An account with this email already exists.']);
-        exit;
+    if (empty($error)) {
+        $check_user = mysqli_query($connectdb, "SELECT userID FROM Users WHERE userID = '$userID'");
+        if (mysqli_num_rows($check_user) > 0) {
+            $error = 'This ID is already registered.';
+        }
+
+        $check_email = mysqli_query($connectdb, "SELECT userID FROM Users WHERE email = '$email'");
+        if (mysqli_num_rows($check_email) > 0) {
+            $error = 'An account with this email already exists.';
+        }
     }
 
-    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+    if (empty($error)) {
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
-    $pdo->beginTransaction();
-
-    $stmt = $pdo->prepare("INSERT INTO Users (userID, name, email, passwordHash, role) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$userID, $name, $email, $passwordHash, $role]);
-
-    if ($role === 'staff') {
-        $roleStmt = $pdo->prepare("INSERT INTO CanteenStaff (staffID) VALUES (?)");
-        $roleStmt->execute([$userID]);
-    } elseif ($role === 'student') {
-        $roleStmt = $pdo->prepare("INSERT INTO Student (studentID) VALUES (?)");
-        $roleStmt->execute([$userID]);
+        $insert_user = "INSERT INTO Users (userID, name, email, passwordHash, role) 
+                        VALUES ('$userID', '$name', '$email', '$passwordHash', '$role')";
+        $run_query = mysqli_query($connectdb, $insert_user);
+        if ($run_query) {
+            if ($role === 'staff') {
+                header('Location: ../frontend/staff_login.html');
+                exit();
+            } elseif ($role === 'student') {
+                mysqli_query($connectdb, "INSERT INTO Student (studentID) VALUES ('$userID')");
+                header('Location: ../frontend/index.html');
+                exit();
+            } else {
+                $error = "Invalid role selected.";
+            }
+        } else {
+            $error = "Database error: " . mysqli_error($connectdb);
+        }
     }
 
-    $pdo->commit();
-
-    echo json_encode(['success' => true, 'message' => 'Registration successful! You can now log in.']);
-
-} catch (Exception $e) {
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
+    if (!empty($error)) {
+        echo "<script>alert('$error'); window.history.back();</script>";
+        exit();
     }
-    error_log("Registration error: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'A database error occurred. Please try again later.']);
 }
 ?>

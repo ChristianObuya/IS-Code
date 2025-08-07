@@ -4,12 +4,9 @@ $dbname = 'campusbite';
 $username = 'root';
 $password = '';
 
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $e->getMessage()]);
-    die();
+$connectdb = mysqli_connect($host, $username, $password, $dbname);
+
+if (!$connectdb) {
+    die("Connection failed: " . mysqli_connect_error());
 }
 ?>

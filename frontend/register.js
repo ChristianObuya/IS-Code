@@ -1,43 +1,35 @@
-document.getElementById('registerForm').addEventListener('submit', async function (e) {
-    e.preventDefault();
-
-    const userID = document.getElementById('userID').value;
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+document.getElementById('registerForm').addEventListener('submit', function (e) {
+    const userID = document.getElementById('userID').value.trim();
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
     const role = document.getElementById('role').value;
-    const messageEl = document.getElementById('message');
 
+    const messageEl = document.getElementById('message');
     messageEl.textContent = '';
     messageEl.style.color = 'red';
 
-    try {
-        const response = await fetch('../backend/register.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `userID=${encodeURIComponent(userID)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&role=${encodeURIComponent(role)}`
-        });
+    if (!userID || !name || !email || !password || !role) {
+        e.preventDefault();
+        messageEl.textContent = 'All fields are required.';
+        return;
+    }
 
-        const result = await response.json();
+    if (!email.includes('@') || !email.includes('.')) {
+        e.preventDefault();
+        messageEl.textContent = 'Invalid email format.';
+        return;
+    }
 
-        if (result.success) {
-            messageEl.style.color = 'green';
-            messageEl.textContent = result.message;
-            document.getElementById('registerForm').reset();
-            setTimeout(() => {
-                if (role === 'staff') {
-                    window.location.href = 'staff_login.html';
-                } else {
-                    window.location.href = 'index.html';
-                }
-            }, 1500);
-        } else {
-            messageEl.textContent = result.message;
-        }
-    } catch (error) {
-        messageEl.textContent = 'An error occurred. Please try again.';
-        console.error('Registration error:', error);
+    if (password.length < 6) {
+        e.preventDefault();
+        messageEl.textContent = 'Password must be at least 6 characters.';
+        return;
+    }
+
+    if (role !== 'student' && role !== 'staff') {
+        e.preventDefault();
+        messageEl.textContent = 'Please select a valid role.';
+        return;
     }
 });

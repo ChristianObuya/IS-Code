@@ -223,7 +223,7 @@ async function loadInventory() {
         }
 
         inventoryList.innerHTML = '';
-        result.data.forEach((inv, index) => {
+        result.data.forEach(inv => {
             const isAvailable = inv.available == 1;
             let statusText, statusClass;
 
@@ -240,7 +240,7 @@ async function loadInventory() {
                 tr.className = 'item-unavailable';
             }
             tr.innerHTML = `
-                <td>${index + 1}</td>
+                <td>${inv.itemID}</td>
                 <td>${inv.name}</td>
                 <td>${inv.stockQuantity}</td>
                 <td>${inv.lowStockThreshold}</td>
