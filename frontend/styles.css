@@ -572,6 +572,11 @@ body {
     font-weight: bold;
 }
 
+.unavailable-status {
+    color: #95a5a6;
+    font-weight: bold;
+}
+
 .btn-activate {
     background: #2ecc71; /* A nice green for activation */
     color: white;

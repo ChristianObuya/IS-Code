@@ -44,7 +44,7 @@ try {
         $itemID = (int)$item['id'];
         $quantityNeeded = (int)$item['quantity'];
         if (!isset($currentStock[$itemID]) || $currentStock[$itemID] < $quantityNeeded) {
-            throw new Exception("Insufficient stock for item ID #{$itemID}. Please adjust your cart.");
+            throw new Exception("This item is currently out of stock, please adjust your cart.");
         }
     }
 
@@ -79,7 +79,7 @@ try {
     error_log("Order placement failed: " . $e->getMessage());
     echo json_encode([
         'success' => false,
-        'message' => 'Failed to place order: ' . $e->getMessage()
+        'message' => $e->getMessage()
     ]);
 }
 ?>

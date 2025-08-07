@@ -15,7 +15,7 @@ try {
     $stmt = $pdo->prepare("
         SELECT itemID, name, description, price, category, available, imagePath 
         FROM MenuItem 
-        ORDER BY name
+        ORDER BY available DESC, name ASC
     ");
     $stmt->execute();
     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);

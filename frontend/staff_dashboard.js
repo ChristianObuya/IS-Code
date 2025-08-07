@@ -79,10 +79,9 @@ async function loadMenuItems() {
             const availabilityText = item.available ? 'Yes' : 'No';
             const toggleButtonText = item.available ? 'Deactivate' : 'Activate';
             const toggleButtonClass = item.available ? 'btn-delete' : 'btn-activate';
-            const displayId = index + 1; // Create a clean, sequential number for display
 
             tr.innerHTML = `
-                <td>${displayId}</td>
+                <td>${item.itemID}</td>
                 <td>${item.name}</td>
                 <td>KES ${parseFloat(item.price).toFixed(2)}</td>
                 <td>${item.category || 'Unknown'}</td>
@@ -161,6 +160,7 @@ async function deleteItem(id) {
             alert('Delete failed: ' + result.message);
         } else {
             loadMenuItems();
+            loadInventory(); // Refresh inventory to reflect availability change
         }
     } catch (error) {
         alert('A network error occurred while trying to delete the item.');
@@ -199,6 +199,7 @@ itemForm.addEventListener('submit', async (e) => {
             itemForm.style.display = 'none';
             imageInput.value = '';
             loadMenuItems();
+            loadInventory(); // Refresh inventory to reflect the changes
         } else {
             alert('Save failed: ' + result.message);  // Now shows real error
         }
@@ -223,18 +224,31 @@ async function loadInventory() {
 
         inventoryList.innerHTML = '';
         result.data.forEach(inv => {
-            const status = inv.stockQuantity <= inv.lowStockThreshold ? 'Low Stock' : 'In Stock';
+            const isAvailable = inv.available == 1;
+            let statusText, statusClass;
+
+            if (!isAvailable) {
+                statusText = 'Unavailable';
+                statusClass = 'unavailable-status';
+            } else {
+                statusText = inv.stockQuantity <= inv.lowStockThreshold ? 'Low Stock' : 'In Stock';
+                statusClass = inv.stockQuantity <= inv.lowStockThreshold ? 'low-stock' : '';
+            }
+
             const tr = document.createElement('tr');
+            if (!isAvailable) {
+                tr.className = 'item-unavailable';
+            }
             tr.innerHTML = `
                 <td>${inv.itemID}</td>
                 <td>${inv.name}</td>
                 <td>${inv.stockQuantity}</td>
                 <td>${inv.lowStockThreshold}</td>
-                <td><strong class="${status === 'Low Stock' ? 'low-stock' : ''}">${status}</strong></td>
+                <td><strong class="${statusClass}">${statusText}</strong></td>
                 <td>
                     <div class="stock-update-form">
-                        <input type="number" class="stock-input" placeholder="Qty" min="1" step="1">
-                        <button class="btn-add-stock" data-id="${inv.itemID}">Add</button>
+                        <input type="number" class="stock-input" placeholder="Qty" min="1" step="1" ${!isAvailable ? 'disabled' : ''}>
+                        <button class="btn-add-stock" data-id="${inv.itemID}" ${!isAvailable ? 'disabled' : ''}>Add</button>
                     </div>
                 </td>
             `;

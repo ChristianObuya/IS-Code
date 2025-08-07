@@ -26,19 +26,19 @@ if ($itemID <= 0 || $quantity <= 0) {
 
 try {
     $stmt = $pdo->prepare(
-        "UPDATE Inventory SET stockQuantity = stockQuantity + ? WHERE itemID = ?"
+        "INSERT INTO Inventory (itemID, stockQuantity, lowStockThreshold)
+         VALUES (?, ?, 5)
+         ON DUPLICATE KEY UPDATE stockQuantity = stockQuantity + VALUES(stockQuantity)"
     );
-    $stmt->execute([$quantity, $itemID]);
+    $stmt->execute([$itemID, $quantity]);
 
-    if ($stmt->rowCount() > 0) {
-        echo json_encode(['success' => true, 'message' => 'Stock updated successfully.']);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Item not found in inventory.']);
-    }
+    // This query will either insert a new row or update an existing one.
+    // It will only fail if there's a database constraint error (e.g., foreign key).
+    echo json_encode(['success' => true, 'message' => 'Stock updated successfully.']);
+
 } catch (Exception $e) {
     http_response_code(500);
     error_log("Update inventory failed: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'A database error occurred.']);
 }
 ?>
-

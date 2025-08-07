@@ -14,13 +14,14 @@ if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'staff') {
 try {
     $stmt = $pdo->prepare("
         SELECT 
-            i.itemID, 
             m.name, 
-            i.stockQuantity, 
-            i.lowStockThreshold 
-        FROM Inventory i
-        JOIN MenuItem m ON i.itemID = m.itemID
-        ORDER BY m.name
+            m.itemID, 
+            m.available,
+            IFNULL(i.stockQuantity, 0) as stockQuantity, 
+            IFNULL(i.lowStockThreshold, 5) as lowStockThreshold 
+        FROM MenuItem m
+        LEFT JOIN Inventory i ON m.itemID = i.itemID
+        ORDER BY m.available DESC, m.name
     ");
     $stmt->execute();
     $inventory = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -33,4 +34,3 @@ try {
     echo json_encode(['success' => false, 'message' => 'Failed to load inventory.']);
 }
 ?>
-
