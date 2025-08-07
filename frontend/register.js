@@ -27,7 +27,11 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             messageEl.textContent = result.message;
             document.getElementById('registerForm').reset();
             setTimeout(() => {
-                window.location.href = 'index.html';
+                if (role === 'staff') {
+                    window.location.href = 'staff_login.html';
+                } else {
+                    window.location.href = 'index.html';
+                }
             }, 1500);
         } else {
             messageEl.textContent = result.message;
