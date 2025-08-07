@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $run_query = mysqli_query($connectdb, $insert_user);
         if ($run_query) {
             if ($role === 'staff') {
+                mysqli_query($connectdb, "INSERT INTO CanteenStaff (staffID) VALUES ('$userID')");
                 header('Location: ../frontend/staff_login.html');
                 exit();
             } elseif ($role === 'student') {
