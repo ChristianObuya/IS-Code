@@ -8,12 +8,13 @@ loginForm.addEventListener('submit', async (e) => {
 
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const expectedRole = document.getElementById('expectedRole').value;
 
     try {
         const response = await fetch('../backend/login.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+            body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&expectedRole=${encodeURIComponent(expectedRole)}`
         });
 
         const result = await response.json();
