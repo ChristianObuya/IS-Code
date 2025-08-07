@@ -81,7 +81,7 @@ async function loadMenuItems() {
             const toggleButtonClass = item.available ? 'btn-delete' : 'btn-activate';
 
             tr.innerHTML = `
-                <td>${item.itemID}</td>
+                <td>${index + 1}</td>
                 <td>${item.name}</td>
                 <td>KES ${parseFloat(item.price).toFixed(2)}</td>
                 <td>${item.category || 'Unknown'}</td>
@@ -223,7 +223,7 @@ async function loadInventory() {
         }
 
         inventoryList.innerHTML = '';
-        result.data.forEach(inv => {
+        result.data.forEach((inv, index) => {
             const isAvailable = inv.available == 1;
             let statusText, statusClass;
 
@@ -240,7 +240,7 @@ async function loadInventory() {
                 tr.className = 'item-unavailable';
             }
             tr.innerHTML = `
-                <td>${inv.itemID}</td>
+                <td>${index + 1}</td>
                 <td>${inv.name}</td>
                 <td>${inv.stockQuantity}</td>
                 <td>${inv.lowStockThreshold}</td>
