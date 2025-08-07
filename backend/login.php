@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         header('Location: ../frontend/staff_dashboard.html');
                         exit();
                     } elseif ($user['role'] === 'student') {
-                        header('Location: ../frontend/student_home.html');
+                        header('Location: ../frontend/student_home.php');
                         exit();
                     } else {
                         $error = "Invalid role assigned in system.";

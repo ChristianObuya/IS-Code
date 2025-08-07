@@ -8,7 +8,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <header class="header">
             <h1>CampusBite</h1>
             <p>Welcome to the University Canteen</p>
@@ -18,13 +17,11 @@
             </div>
         </header>
 
-        <!-- Hero -->
         <section class="hero">
             <h2>What would you like to eat today?</h2>
             <p>Browse the menu and place your order online. Skip the queue!</p>
         </section>
 
-        <!-- Category Nav -->
         <nav class="category-nav">
             <button class="nav-btn active" data-category="all">All Items</button>
             <button class="nav-btn" data-category="main">Main Course</button>
@@ -32,14 +29,28 @@
             <button class="nav-btn" data-category="beverage">Beverages</button>
         </nav>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Menu Grid -->
             <section class="menu-grid" id="menuGrid">
-                <p class="loading">Loading menu from canteen...</p>
+                <?php
+                include '../backend/config.php';
+
+                $query = "SELECT itemID, name, description, price, imagePath, category FROM MenuItem";
+                $result = mysqli_query($connectdb, $query);
+
+                if ($result && mysqli_num_rows($result) > 0) {
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        echo "<div class='menu-card' data-category='" . $row['category'] . "'>";
+                        echo "<img class='add-to-cart' data-name='" . htmlspecialchars($row['name']) . "' data-price='" . $row['price'] . "' src='images/" . basename($row['imagePath']) . "' alt='" . htmlspecialchars($row['name']) . "' />";
+                        echo "<h3>" . htmlspecialchars($row['name']) . "</h3>";
+                        echo "<p>Price: KES " . $row['price'] . "</p>";
+                        echo "</div>";
+                    }
+                } else {
+                    echo "<p class='loading'>Unable to connect to the canteen system</p>";
+                }
+                ?>
             </section>
 
-            <!-- Cart Sidebar -->
             <aside class="cart-sidebar">
                 <h3>Your Order</h3>
                 <ul id="cartItems">
@@ -48,12 +59,11 @@
                 <div class="cart-total">
                     <strong>Total: KES </strong><span id="cartTotal">0.00</span>
                 </div>
-                <button id="checkoutBtn" disabled>Proceed to Payment</button>
+                <button id="checkoutBtn">Proceed to Payment</button>
             </aside>
         </main>
     </div>
 
-    <!-- Orders Modal -->
     <div class="modal" id="ordersModal" style="display: none;">
         <div class="modal-content">
             <h3>My Orders</h3>

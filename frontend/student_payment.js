@@ -14,7 +14,7 @@ const orderID = urlParams.get('orderID');
 
 if (!pendingOrderCart || !orderID) {
     alert('No pending order found or order ID is missing. Returning to menu.');
-    window.location.href = 'student_home.html';
+    window.location.href = 'student_home.php';
 }
 
 // Display order summary
