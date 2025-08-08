@@ -1,138 +1,162 @@
 <?php
 session_start();
-
-require_once 'config.php';
+include 'config.php';
 
 // Check if user is logged in and is staff
-if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'staff') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Access denied. Staff login required.']);
-    exit;
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'staff') {
+    echo "<script>alert('Access denied. Please log in as staff.'); window.history.back();</script>";
+    exit();
 }
 
-$staffID = (int)$_SESSION['userID'];
-
+// Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
-    exit;
+    echo "<script>alert('Invalid request method.'); window.history.back();</script>";
+    exit();
 }
 
-$action = $_POST['action'] ?? '';
-if (!in_array($action, ['add', 'edit', 'delete'])) {
-    echo json_encode(['success' => false, 'message' => 'Invalid action.']);
-    exit;
-}
+// Get the action: add, edit, or delete
+$action = isset($_POST['action']) ? $_POST['action'] : '';
 
-// Define upload directory
+// Define upload directory (relative to your project)
 $uploadDir = '../frontend/images/';
-$imagePath = null;
 
-// Create images folder if it doesn't exist
+// Create the images folder if it doesn't exist
 if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0777, true);
 }
 
-// Handle image upload
+$imagePath = null;
+
+// Handle image upload (if any)
 if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-    $fileName = 'food_' . uniqid() . '_' . basename($_FILES['image']['name']);
     $fileTmp = $_FILES['image']['tmp_name'];
+    $fileName = 'food_' . time() . '_' . basename($_FILES['image']['name']);
     $filePath = $uploadDir . $fileName;
     $fileType = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
 
-    // Validate image type
+    // Allow only certain image types
     $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
     if (!in_array($fileType, $allowedTypes)) {
-        echo json_encode(['success' => false, 'message' => 'Only JPG, JPEG, PNG, and GIF files are allowed.']);
-        exit;
+        echo "<script>alert('Only JPG, JPEG, PNG, and GIF files are allowed.'); window.history.back();</script>";
+        exit();
     }
 
+    // Move uploaded file
     if (move_uploaded_file($fileTmp, $filePath)) {
-        $imagePath = 'images/' . $fileName; // Save relative path
+        $imagePath = 'images/' . $fileName;  // Save relative path for database
     } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to upload image. Check folder permissions.']);
-        exit;
+        echo "<script>alert('Failed to upload image. Check folder permissions.'); window.history.back();</script>";
+        exit();
     }
 }
 
-try {
-    if ($action === 'add' || $action === 'edit') {
-        $name = trim($_POST['name'] ?? '');
-        $description = trim($_POST['description'] ?? '');
-        $price = floatval($_POST['price'] ?? 0);
-        $category = trim($_POST['category'] ?? '');
-        $available = (int)$_POST['available'];
+// --- ACTION: ADD NEW MENU ITEM ---
+if ($action === 'add') {
+    $name = mysqli_real_escape_string($connectdb, trim($_POST['name']));
+    $description = mysqli_real_escape_string($connectdb, trim($_POST['description']));
+    $price = (float)$_POST['price'];
+    $category = mysqli_real_escape_string($connectdb, trim($_POST['category']));
+    $available = 1; // Always available
 
-        if (empty($name) || $price <= 0) {
-            echo json_encode(['success' => false, 'message' => 'Name and price are required.']);
-            exit;
-        }
-
-        if ($action === 'add') {
-            $pdo->beginTransaction();
-
-            // Insert into MenuItem
-            $stmt = $pdo->prepare("INSERT INTO MenuItem (name, description, price, category, available, imagePath) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$name, $description, $price, $category, $available, $imagePath ?: 'images/placeholder.jpg']);
-            $itemID = $pdo->lastInsertId();
-
-            // Insert into Inventory
-            $stmt = $pdo->prepare("INSERT INTO Inventory (itemID, stockQuantity, lowStockThreshold) VALUES (?, 50, 5)");
-            $stmt->execute([$itemID]);
-
-            $pdo->commit();
-
-            echo json_encode([
-                'success' => true,
-                'message' => 'Item added successfully.',
-                'itemID' => $itemID
-            ]);
-        } else {
-            $id = (int)$_POST['id'];
-
-            // If no new image, keep old one
-            if (!$imagePath) {
-                $stmt = $pdo->prepare("SELECT imagePath FROM MenuItem WHERE itemID = ?");
-                $stmt->execute([$id]);
-                $row = $stmt->fetch();
-                $imagePath = $row ? $row['imagePath'] : 'images/placeholder.jpg';
-            }
-
-            $stmt = $pdo->prepare("UPDATE MenuItem SET name=?, description=?, price=?, category=?, available=?, imagePath=? WHERE itemID=?");
-            $stmt->execute([$name, $description, $price, $category, $available, $imagePath, $id]);
-
-            if ($stmt->rowCount() > 0) {
-                echo json_encode(['success' => true, 'message' => 'Item updated successfully.']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'No changes made or item not found.']);
-            }
-        }
+    // Validate required fields
+    if (empty($name) || $price <= 0 || empty($category)) {
+        echo "<script>alert('Name, price, and category are required.'); window.history.back();</script>";
+        exit();
     }
 
-    if ($action === 'delete') {
-        $id = (int)$_POST['id'];
+    // Use placeholder image if no upload
+    $imagePath = $imagePath ?: 'images/placeholder.jpg';
 
-        // This is now a "soft delete" or "toggle availability" action
-        // to preserve data integrity with past orders.
-        $stmt = $pdo->prepare("SELECT available FROM MenuItem WHERE itemID = ?");
-        $stmt->execute([$id]);
-        $currentStatus = $stmt->fetchColumn();
+    // Insert into MenuItem table
+    $sql = "INSERT INTO MenuItem (name, description, price, category, available, imagePath) 
+            VALUES ('$name', '$description', '$price', '$category', '$available', '$imagePath')";
 
-        // Toggle the status
-        $newStatus = ($currentStatus == 1) ? 0 : 1;
+    if (mysqli_query($connectdb, $sql)) {
+        // Get the new auto-generated itemID
+        $itemID = mysqli_insert_id($connectdb);
 
-        $updateStmt = $pdo->prepare("UPDATE MenuItem SET available = ? WHERE itemID = ?");
-        $updateStmt->execute([$newStatus, $id]);
-        
-        $message = $newStatus == 1 ? 'Item activated successfully.' : 'Item deactivated successfully.';
-        echo json_encode(['success' => true, 'message' => $message]);
+        // Insert into Inventory with the correct itemID
+        $stockSql = "INSERT INTO Inventory (itemID, stockQuantity, lowStockThreshold) 
+                     VALUES ($itemID, 50, 5)";
+        mysqli_query($connectdb, $stockSql); // Run even if fails
+
+        // Redirect back to dashboard
+        header('Location: ../staff/staff_dashboard.html');
+        exit();
+    } else {
+        // Show MySQL error
+        $error = mysqli_error($connectdb);
+        echo "<script>alert('Database error: $error'); window.history.back();</script>";
+        exit();
     }
-} catch (Exception $e) {
-    if ($pdo->inTransaction()) $pdo->rollback();
-    error_log("Menu management error: " . $e->getMessage());
-    echo json_encode([
-        'success' => false,
-        'message' => 'An error occurred: ' . $e->getMessage()  // Now shows real error
-    ]);
 }
+
+// EDIT 
+if ($action === 'edit') {
+    // ✅ You must get the id from POST
+    $id = (int)$_POST['id'];
+    $name = mysqli_real_escape_string($connectdb, trim($_POST['name']));
+    $description = mysqli_real_escape_string($connectdb, trim($_POST['description']));
+    $price = (float)$_POST['price'];
+    $category = mysqli_real_escape_string($connectdb, trim($_POST['category']));
+    $available = 1; // Always available
+
+    // Validate
+    if (empty($name) || $price <= 0 || empty($category)) {
+        echo "<script>alert('Name, price, and category are required.'); window.history.back();</script>";
+        exit();
+    }
+
+    // If no new image, keep the old one
+    if (!$imagePath) {
+        $result = mysqli_query($connectdb, "SELECT imagePath FROM MenuItem WHERE itemID = $id");
+        $row = mysqli_fetch_assoc($result);
+        $imagePath = $row['imagePath'];
+    }
+
+    // Update the item
+    $sql = "UPDATE MenuItem SET 
+                name = '$name', 
+                description = '$description', 
+                price = '$price', 
+                category = '$category', 
+                available = '$available', 
+                imagePath = '$imagePath' 
+            WHERE itemID = $id";
+
+    if (mysqli_query($connectdb, $sql)) {
+        header('Location: ../staff/staff_dashboard.html');
+        exit();
+    } else {
+        $error = mysqli_error($connectdb);
+        echo "<script>alert('Update failed: $error'); window.history.back();</script>";
+        exit();
+    }
+}
+
+// DELETE
+if ($action === 'delete') {
+    $id = (int)$_POST['id'];
+
+    // Check if item exists
+    $result = mysqli_query($connectdb, "SELECT itemID FROM MenuItem WHERE itemID = $id");
+    if (mysqli_num_rows($result) == 0) {
+        echo "<script>alert('Item not found.'); window.history.back();</script>";
+        exit();
+    }
+
+    // Delete the item
+    $sql = "DELETE FROM MenuItem WHERE itemID = $id";
+    if (mysqli_query($connectdb, $sql)) {
+        echo "<script>alert('Item deleted successfully.'); window.history.back();</script>";
+        exit();
+    } else {
+        $error = mysqli_error($connectdb);
+        echo "<script>alert('Delete failed: $error'); window.history.back();</script>";
+        exit();
+    }
+}
+
+echo "<script>alert('Invalid action.'); window.history.back();</script>";
+exit();
 ?>

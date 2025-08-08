@@ -1,36 +1,68 @@
 <?php
 session_start();
-require_once 'config.php';
+include 'config.php';
 
-header('Content-Type: application/json');
-
-// Security: Only logged-in staff can view inventory.
-if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'staff') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Access denied.']);
-    exit;
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'staff') {
+    echo "<tr><td colspan='6'>Access denied. Please log in as staff.</td></tr>";
+    exit();
 }
 
-try {
-    $stmt = $pdo->prepare("
-        SELECT 
-            m.name, 
-            m.itemID, 
-            m.available,
-            IFNULL(i.stockQuantity, 0) as stockQuantity, 
-            IFNULL(i.lowStockThreshold, 5) as lowStockThreshold 
-        FROM MenuItem m
-        LEFT JOIN Inventory i ON m.itemID = i.itemID
-        ORDER BY m.available DESC, m.name
-    ");
-    $stmt->execute();
-    $inventory = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$sql = "
+    SELECT 
+        m.name, 
+        m.itemID, 
+        m.available,
+        COALESCE(i.stockQuantity, 0) AS stockQuantity, 
+        COALESCE(i.lowStockThreshold, 5) AS lowStockThreshold 
+    FROM MenuItem m
+    LEFT JOIN Inventory i ON m.itemID = i.itemID
+    ORDER BY m.available DESC, m.name
+";
 
-    echo json_encode(['success' => true, 'data' => $inventory]);
+$result = mysqli_query($connectdb, $sql);
 
-} catch (Exception $e) {
-    http_response_code(500);
-    error_log("Get inventory failed: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Failed to load inventory.']);
+if (!$result) {
+    echo "<tr><td colspan='6'>Database error: " . mysqli_error($connectdb) . "</td></tr>";
+    exit();
+}
+
+if (mysqli_num_rows($result) > 0) {
+    while ($item = mysqli_fetch_assoc($result)) {
+        $isAvailable = $item['available'] == 1;
+        $stock = $item['stockQuantity'];
+        $threshold = $item['lowStockThreshold'];
+
+        if (!$isAvailable) {
+            $statusText = "Unavailable";
+            $statusClass = "unavailable-status";
+        } elseif ($stock <= $threshold) {
+            $statusText = "Low Stock";
+            $statusClass = "low-stock";
+        } else {
+            $statusText = "In Stock";
+            $statusClass = "";
+        }
+
+        $rowClass = $isAvailable ? "" : "item-unavailable";
+
+        $disabled = $isAvailable ? "" : "disabled";
+
+        echo "
+        <tr class='$rowClass'>
+            <td>" . $item['itemID'] . "</td>
+            <td>" . htmlspecialchars($item['name']) . "</td>
+            <td>$stock</td>
+            <td>$threshold</td>
+            <td><strong class='$statusClass'>$statusText</strong></td>
+            <td>
+                <div class='stock-update-form'>
+                    <input type='number' class='stock-input' placeholder='Qty' min='1' step='1' $disabled>
+                    <button class='btn-add-stock' data-id='" . $item['itemID'] . "' $disabled>Add</button>
+                </div>
+            </td>
+        </tr>";
+    }
+} else {
+    echo "<tr><td colspan='6'>No inventory items found.</td></tr>";
 }
 ?>

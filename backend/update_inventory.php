@@ -1,44 +1,46 @@
 <?php
 session_start();
-require_once 'config.php';
+include 'config.php';  // Gives us $connectdb
 
-header('Content-Type: application/json');
-
-// Security: Only logged-in staff can update inventory.
-if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'staff') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Access denied.']);
-    exit;
+// Check if logged in and is staff
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'staff') {
+    echo "<script>alert('Access denied. Please log in as staff.'); window.history.back();</script>";
+    exit();
 }
 
+// Only allow POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    exit;
+    echo "<script>alert('Invalid request method.'); window.history.back();</script>";
+    exit();
 }
 
+// Get and validate itemID and quantity
 $itemID = (int)($_POST['itemID'] ?? 0);
 $quantity = (int)($_POST['quantity'] ?? 0);
 
 if ($itemID <= 0 || $quantity <= 0) {
-    echo json_encode(['success' => false, 'message' => 'Invalid item ID or quantity provided.']);
-    exit;
+    echo "<script>alert('Invalid item or quantity.'); window.history.back();</script>";
+    exit();
 }
 
-try {
-    $stmt = $pdo->prepare(
-        "INSERT INTO Inventory (itemID, stockQuantity, lowStockThreshold)
-         VALUES (?, ?, 5)
-         ON DUPLICATE KEY UPDATE stockQuantity = stockQuantity + VALUES(stockQuantity)"
-    );
-    $stmt->execute([$itemID, $quantity]);
+// Check if item exists in MenuItem
+$check = mysqli_query($connectdb, "SELECT itemID FROM MenuItem WHERE itemID = $itemID");
+if (mysqli_num_rows($check) == 0) {
+    echo "<script>alert('Item not found.'); window.history.back();</script>";
+    exit();
+}
 
-    // This query will either insert a new row or update an existing one.
-    // It will only fail if there's a database constraint error (e.g., foreign key).
-    echo json_encode(['success' => true, 'message' => 'Stock updated successfully.']);
+// Update stock: Add new quantity to existing stock
+$sql = "
+    UPDATE Inventory 
+    SET stockQuantity = stockQuantity + $quantity 
+    WHERE itemID = $itemID";
 
-} catch (Exception $e) {
-    http_response_code(500);
-    error_log("Update inventory failed: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'A database error occurred.']);
+if (mysqli_query($connectdb, $sql)) {
+    // Success!
+    echo "<script>alert('Stock updated successfully! Added $quantity units.'); window.history.back();</script>";
+} else {
+    // Database error
+    echo "<script>alert('Database error: " . mysqli_error($connectdb) . "'); window.history.back();</script>";
 }
 ?>

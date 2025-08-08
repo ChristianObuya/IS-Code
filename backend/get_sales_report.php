@@ -1,59 +1,82 @@
 <?php
 session_start();
-require_once 'config.php';
+include 'config.php';  // Gives us $connectdb
 
-header('Content-Type: application/json');
-
-// Security: Only logged-in staff can view reports
-if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'staff') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Access denied.']);
-    exit;
+// Check if user is logged in and is staff
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'staff') {
+    echo "<p>Access denied. Please log in as staff.</p>";
+    exit();
 }
 
-try {
-    // --- 1. Date Range Input ---
-    $startDate = $_GET['startDate'] ?? date('Y-m-d', strtotime('-7 days')); // Default: last 7 days
-    $endDate = $_GET['endDate'] ?? date('Y-m-d');
+// --- 1. Get and Validate Date Range ---
+$endDate = isset($_GET['endDate']) ? $_GET['endDate'] : '';
+$startDate = isset($_GET['startDate']) ? $_GET['startDate'] : '';
 
-    // Basic validation (more robust validation is recommended)
-    if (strtotime($startDate) === false || strtotime($endDate) === false) {
-        echo json_encode(['success' => false, 'message' => 'Invalid date format.']);
-        exit;
+// If dates are not provided, set default: last 7 days
+if (empty($endDate)) {
+    $endDate = date('Y-m-d');
+}
+if (empty($startDate)) {
+    $startDate = date('Y-m-d', strtotime('-7 days'));
+}
+
+// Validate dates
+if (!strtotime($startDate) || !strtotime($endDate)) {
+    echo "<p>Invalid date format. Please use YYYY-MM-DD.</p>";
+    exit();
+}
+
+$dbStartDate = $startDate . " 00:00:00";
+$dbEndDate = $endDate . " 23:59:59";
+
+$sql = "
+    SELECT 
+        DATE(o.orderTime) as saleDate,
+        SUM(o.totalAmount) as totalSales,
+        COUNT(o.orderID) as orderCount
+    FROM `Order` o
+    WHERE o.orderTime BETWEEN '$dbStartDate' AND '$dbEndDate'
+      AND o.status = 'collected'
+    GROUP BY DATE(o.orderTime)
+    ORDER BY DATE(o.orderTime)
+";
+
+$result = mysqli_query($connectdb, $sql);
+
+if (!$result) {
+    echo "<p>Database error: " . mysqli_error($connectdb) . "</p>";
+    exit();
+}
+
+if (mysqli_num_rows($result) > 0) {
+    echo "
+    <table class='data-table'>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Total Sales (KES)</th>
+                <th>Order Count</th>
+            </tr>
+        </thead>
+        <tbody>";
+
+    while ($row = mysqli_fetch_assoc($result)) {
+        $date = $row['saleDate'];
+        $totalSales = number_format($row['totalSales'], 2);
+        $orderCount = $row['orderCount'];
+
+        echo "
+            <tr>
+                <td>$date</td>
+                <td>KES $totalSales</td>
+                <td>$orderCount</td>
+            </tr>";
     }
 
-    // --- 2. Sales Data Query ---
-    $stmt = $pdo->prepare("
-        SELECT 
-            DATE(o.orderTime) as saleDate,
-            SUM(o.totalAmount) as totalSales,
-            COUNT(o.orderID) as orderCount
-        FROM `Order` o
-        WHERE o.orderTime BETWEEN ? AND ?
-        AND o.status = 'collected'  -- Consider only completed orders
-        GROUP BY DATE(o.orderTime)
-        ORDER BY DATE(o.orderTime)
-    ");
-
-    // Convert to datetime for the database
-    $dbStartDate = $startDate . " 00:00:00";
-    $dbEndDate = $endDate . " 23:59:59";
-
-    $stmt->execute([$dbStartDate, $dbEndDate]);
-    $salesData = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // --- 3. Return Report ---
-    echo json_encode([
-        'success' => true,
-        'startDate' => $startDate,
-        'endDate' => $endDate,
-        'data' => $salesData
-    ]);
-
-} catch (Exception $e) {
-    http_response_code(500);
-    error_log("Sales report error: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Failed to generate sales report.']);
+    echo "
+        </tbody>
+    </table>";
+} else {
+    echo "<p>No sales data found for the selected date range.</p>";
 }
 ?>
-

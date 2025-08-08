@@ -42,11 +42,12 @@
                         echo "<div class='menu-card' data-category='" . $row['category'] . "'>";
                         echo "<img class='add-to-cart' data-name='" . htmlspecialchars($row['name']) . "' data-price='" . $row['price'] . "' src='images/" . basename($row['imagePath']) . "' alt='" . htmlspecialchars($row['name']) . "' />";
                         echo "<h3>" . htmlspecialchars($row['name']) . "</h3>";
-                        echo "<p>Price: KES " . $row['price'] . "</p>";
+                        echo "<p>" . htmlspecialchars($row['description']) . "</p>";
+                        echo "<p>Ksh " . $row['price'] . "</p>";
                         echo "</div>";
                     }
                 } else {
-                    echo "<p class='loading'>Unable to connect to the canteen system</p>";
+                    echo "<p class='loading'>No menu items available.</p>";
                 }
                 ?>
             </section>
