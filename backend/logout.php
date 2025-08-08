@@ -1,7 +1,12 @@
 <?php
 session_start();
-session_unset();
+$role = $_SESSION['role'] ?? null;
+if ($role === 'staff') {
+    header('Location: ../frontend/staff_login.html');
+    exit();
+} elseif ($role === 'student') {
+    header('Location: ../frontend/index.html');
+    exit();
+}
 session_destroy();
-header('Location: ../frontend/index.html');
-exit;
 ?>
