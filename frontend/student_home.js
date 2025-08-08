@@ -12,9 +12,7 @@ for (var i = 0; i < buttons.length; i++) {
         var category = this.getAttribute("data-category");
 
         for (var k = 0; k < items.length; k++) {
-            var itemCat = items[k].getAttribute("data-category");
-
-            if (category === "all" || itemCat === category) {
+            if (category === "all" || items[k].getAttribute("data-category") === category) {
                 items[k].style.display = "block";
             } else {
                 items[k].style.display = "none";
@@ -28,14 +26,12 @@ var cart = [];
 var cartList = document.getElementById("cartItems");
 var cartTotal = document.getElementById("cartTotal");
 var checkoutBtn = document.getElementById("checkoutBtn");
-
 var cartImages = document.getElementsByClassName("add-to-cart");
 
 for (var i = 0; i < cartImages.length; i++) {
     cartImages[i].onclick = function () {
         var name = this.getAttribute("data-name");
         var price = parseFloat(this.getAttribute("data-price"));
-
         cart.push({ name: name, price: price });
         updateCart();
     };
@@ -43,7 +39,6 @@ for (var i = 0; i < cartImages.length; i++) {
 
 function updateCart() {
     cartList.innerHTML = "";
-
     if (cart.length === 0) {
         cartList.innerHTML = "<li class='empty'>Your cart is empty</li>";
         cartTotal.textContent = "0.00";
@@ -52,20 +47,18 @@ function updateCart() {
     }
 
     var total = 0;
-
     for (var i = 0; i < cart.length; i++) {
-        (function(index) {
-            var li = document.createElement("li");
-            li.textContent = cart[index].name + " - KES " + cart[index].price.toFixed(2);
-            li.onclick = function () {
-                cart.splice(index, 1);
-                updateCart();
-            };
-            cartList.appendChild(li);
-            total += cart[index].price;
-        })(i);
+        var li = document.createElement("li");
+        li.textContent = cart[i].name + " - KES " + cart[i].price.toFixed(2);
+        li.setAttribute("data-index", i);
+        li.onclick = function () {
+            var index = this.getAttribute("data-index");
+            cart.splice(index, 1);
+            updateCart();
+        };
+        cartList.appendChild(li);
+        total += cart[i].price;
     }
-
     cartTotal.textContent = total.toFixed(2);
     checkoutBtn.disabled = false;
 }
@@ -84,4 +77,4 @@ function closeModal() {
 
 checkoutBtn.onclick = function () {
     window.location.href = "student_payment.html";
-}
+};

@@ -1,34 +1,53 @@
 <?php
 session_start();
-require_once 'config.php';
+include 'config.php';  // This gives us $connectdb
 
-header('Content-Type: application/json');
+// Check if user is logged in and is staff
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'staff') {
 
-// Security: Only logged-in staff can view all menu items.
-if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'staff') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Access denied.']);
-    exit;
-}
+    // Query the menu items
+    $sql = "SELECT itemID, name, description, price, category, available 
+            FROM MenuItem 
+            ORDER BY available DESC, name ASC";
 
-try {
-    $stmt = $pdo->prepare("
-        SELECT itemID, name, description, price, category, available, imagePath 
-        FROM MenuItem 
-        ORDER BY available DESC, name ASC
-    ");
-    $stmt->execute();
-    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $result = mysqli_query($connectdb, $sql);
 
-    echo json_encode([
-        'success' => true,
-        'data' => $items
-    ]);
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Failed to load menu items.'
-    ]);
+    // Check if query worked
+    if (!$result) {
+        echo "<tr><td colspan='6'>Database error: " . mysqli_error($connectdb) . "</td></tr>";
+        exit;
+    }
+
+    // Check if there are any items
+    if (mysqli_num_rows($result) > 0) {
+        $index = 1;
+        while ($item = mysqli_fetch_assoc($result)) {
+            $availability = $item['available'] == 1 ? 'Yes' : 'No';
+            $toggleText = $item['available'] == 1 ? 'Deactivate' : 'Activate';
+            $btnClass = $item['available'] == 1 ? 'btn-delete' : 'btn-activate';
+            $rowClass = $item['available'] == 0 ? 'item-unavailable' : '';
+
+            echo "
+            <tr class='$rowClass'>
+                <td>$index</td>
+                <td>" . htmlspecialchars($item['name']) . "</td>
+                <td>KES " . number_format($item['price'], 2) . "</td>
+                <td>" . ucfirst($item['category']) . "</td>
+                <td>$availability</td>
+                <td>
+                    <button class='btn-edit' data-id='" . $item['itemID'] . "'>Edit</button>
+                    <button class='$btnClass' data-id='" . $item['itemID'] . "'>$toggleText</button>
+                </td>
+            </tr>";
+            $index++;
+        }
+    } else {
+        // No items found
+        echo "<tr><td colspan='6'>No menu items available.</td></tr>";
+    }
+
+} else {
+    // Not logged in or not staff
+    echo "<tr><td colspan='6'>Access denied. Please log in as staff.</td></tr>";
 }
 ?>
