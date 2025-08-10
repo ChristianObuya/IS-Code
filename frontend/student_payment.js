@@ -1,99 +1,115 @@
 // DOM Elements
-const paymentItems = document.getElementById('paymentItems');
-const paymentTotal = document.getElementById('paymentTotal');
-const phoneInput = document.getElementById('phone');
-const payBtn = document.getElementById('payBtn');
-const paymentMsg = document.getElementById('paymentMsg');
+var paymentItems = document.getElementById('paymentItems');
+var paymentTotal = document.getElementById('paymentTotal');
+var phoneInput = document.getElementById('phone');
+var payBtn = document.getElementById('payBtn');
+var paymentMsg = document.getElementById('paymentMsg');
 
-// Load pending order from localStorage
-const pendingOrderCart = JSON.parse(localStorage.getItem('pendingOrder'))?.items;
-
-// Get orderID from URL
-const urlParams = new URLSearchParams(window.location.search);
-const orderID = urlParams.get('orderID');
-
-if (!pendingOrderCart || !orderID) {
-    alert('No pending order found or order ID is missing. Returning to menu.');
-    window.location.href = 'student_home.php';
+// Get URL parameters
+function getUrlParameter(name) {
+    var urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
 }
 
-// Display order summary
-function loadOrderSummary() {
-    paymentItems.innerHTML = '';
-    let total = 0;
+var orderID = getUrlParameter('orderID');
+var totalAmount = getUrlParameter('totalAmount');
 
-    pendingOrderCart.forEach(item => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-            ${item.name} × ${item.quantity} 
-            <span>KES ${(item.price * item.quantity).toFixed(2)}</span>
-        `;
-        paymentItems.appendChild(li);
-        total += item.price * item.quantity;
-    });
-
-    paymentTotal.textContent = total.toFixed(2);
-}
-
-payBtn.addEventListener('click', async () => {
-    const phone = phoneInput.value.trim();
-    paymentMsg.textContent = '';
-    paymentMsg.style.color = 'red';
-
-    if (!phone || !/^(07|01)\d{8}$/.test(phone)) {
-        paymentMsg.textContent = 'Please enter a valid M-Pesa phone number.';
+// On Load
+document.addEventListener('DOMContentLoaded', function () {
+    if (!orderID || !totalAmount || isNaN(orderID) || isNaN(totalAmount)) {
+        alert('Invalid order data.');
+        window.location.href = 'student_home.php';
         return;
     }
 
-    paymentMsg.textContent = 'Confirming payment...';
-    payBtn.disabled = true;
+    // Display total
+    paymentTotal.textContent = parseFloat(totalAmount).toFixed(2);
 
-    try {
-        // Generate a mock transaction ID for the M-Pesa push
-        const transactionID = 'RDI' + Date.now().toString().slice(-8).toUpperCase();
+    // Fetch order details
+    fetch('../backend/place_order.php?orderID=' + orderID)
+        .then(function (response) {
+            return response.text();
+        })
+        .then(function (data) {
+            data = data.trim();
 
-        const response = await fetch('../backend/confirm_payment.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderID, transactionID })
-        });
-
-        if (!response.ok) {
-            let errorMsg = `Error: ${response.status} ${response.statusText}`;
-            try {
-                // Try to get a more specific error from the backend
-                const errorResult = await response.json();
-                errorMsg = errorResult.message || errorMsg;
-            } catch (e) {
-                // The response was not JSON, which is common for 404 or 500 errors.
+            if (data === 'not_found') {
+                alert('Order not found or already processed.');
+                window.location.href = 'student_home.php';
+                return;
             }
-            throw new Error(errorMsg);
-        }
 
-        const result = await response.json();
+            var parts = data.split('|');
+            var dbOrderID = parts[0];
+            var totalAmount = parts[1];
+            var itemsData = decodeURIComponent(parts[2]);
 
-        if (result.success) {
-            // Save cart items for the receipt page to display
-            localStorage.setItem('lastReceiptCart', JSON.stringify(pendingOrderCart));
-            localStorage.removeItem('pendingOrder');
+            var items = JSON.parse(itemsData);
 
-            paymentMsg.style.color = 'green';
-            paymentMsg.textContent = 'Payment confirmed! Redirecting...';
+            // Display items
+            paymentItems.innerHTML = '';
+            let total = 0;
 
-            // Redirect to the receipt page with the real orderID
-            window.location.href = `receipt.html?orderID=${orderID}&transactionID=${transactionID}`;
-        } else {
-            paymentMsg.textContent = `Error: ${result.message}`;
-            payBtn.disabled = false;
-        }
-    } catch (error) {
-        paymentMsg.textContent = error.message; // Display the specific error
-        payBtn.disabled = false;
-        console.error('Payment confirmation error:', error);
-    }
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                var itemTotal = item.price * item.quantity;
+                total += itemTotal;
+
+                var li = document.createElement('li');
+                li.textContent = `${item.name} × ${item.quantity} - KES ${itemTotal.toFixed(2)}`;
+                paymentItems.appendChild(li);
+            }
+
+            // Store for payment
+            window.currentOrderID = dbOrderID;
+            window.currentTotal = total;
+        })
+        .catch(function () {
+            alert('Failed to load order. Please check your connection.');
+            window.location.href = 'student_home.php';
+        });
 });
 
-// On Load
-document.addEventListener('DOMContentLoaded', () => {
-    loadOrderSummary();
+// Handle Pay Button Click
+// Handle Pay Button Click
+payBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    paymentMsg.textContent = '';
+
+    var phone = phoneInput.value.trim();
+
+    if (phone === '' || !/^(07)\d{8}$/.test(phone)) {
+        paymentMsg.style.color = 'red';
+        paymentMsg.textContent = 'Please enter a valid M-Pesa number (e.g., 0712345678).';
+        return;
+    }
+
+    paymentMsg.style.color = 'green';
+    paymentMsg.textContent = 'Payment confirmed! Generating receipt...';
+    payBtn.disabled = true;
+
+    var formData = new FormData();
+    formData.append('orderID', window.currentOrderID);
+
+    fetch('../backend/generate_receipt.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(function (response) {
+        return response.text();  // ← Changed from .json() to .text()
+    })
+    .then(function (text) {
+        text = text.trim();
+        if (text === 'success') {
+            window.location.href = 'receipt.html?orderID=' + window.currentOrderID;
+        } else {
+            alert('Receipt failed: ' + text);
+        }
+    })
+    .catch(function (error) {
+        alert('Network error: ' + error.message);
+        paymentMsg.style.color = 'red';
+        paymentMsg.textContent = 'Failed to process payment.';
+        payBtn.disabled = false;
+    });
 });

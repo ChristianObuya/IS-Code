@@ -39,15 +39,21 @@
 
                 if ($result && mysqli_num_rows($result) > 0) {
                     while ($row = mysqli_fetch_assoc($result)) {
-                        echo "<div class='menu-card' data-category='" . $row['category'] . "'>";
-                        echo "<img class='add-to-cart' data-name='" . htmlspecialchars($row['name']) . "' data-price='" . $row['price'] . "' src='images/" . basename($row['imagePath']) . "' alt='" . htmlspecialchars($row['name']) . "' />";
+                        echo "<div class='menu-card' data-category='" . htmlspecialchars($row['category']) . "'>";
+                        // ✅ Fixed: img has data-id, data-name, data-price
+                        echo "<img class='add-to-cart' 
+                                    data-id='" . (int)$row['itemID'] . "' 
+                                    data-name='" . htmlspecialchars($row['name']) . "' 
+                                    data-price='" . (float)$row['price'] . "' 
+                                    src='images/" . basename($row['imagePath']) . "' 
+                                    alt='" . htmlspecialchars($row['name']) . "' />";
                         echo "<h3>" . htmlspecialchars($row['name']) . "</h3>";
                         echo "<p>" . htmlspecialchars($row['description']) . "</p>";
-                        echo "<p>Ksh " . $row['price'] . "</p>";
+                        echo "<p>Ksh " . number_format($row['price'], 2) . "</p>";
                         echo "</div>";
                     }
                 } else {
-                    echo "<p class='loading'>No menu items available.</p>";
+                    echo "<p>No menu items available.</p>";
                 }
                 ?>
             </section>

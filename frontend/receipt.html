@@ -8,29 +8,25 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <header class="header">
             <h1>CampusBite</h1>
             <p>Digital Receipt</p>
             <a href="../backend/logout.php" id="logoutBtn">Logout</a>
         </header>
 
-        <!-- Receipt -->
         <main class="receipt-main centered-section">
             <div class="receipt-box">
                 <h2>Payment Confirmed</h2>
                 <p>Your order is being prepared. Collect when status is <strong>Ready</strong>.</p>
 
-                <!-- Live Status Banner -->
-                <div class="status-banner" id="receiptStatusBanner" style="margin-top: 20px; margin-bottom: 20px;">
-                    <p><strong>Order Status:</strong> <span id="orderStatusText">Loading...</span></p>
+                <div class="status-banner" id="receiptStatusBanner">
+                    <p><strong>Order Status:</strong> <span id="orderStatusText">Paid</span></p>
                 </div>
 
                 <div class="receipt-section">
                     <h3>Receipt Details</h3>
                     <table class="receipt-table">
                         <tr><th>Receipt ID</th><td id="receiptID">-</td></tr>
-
                         <tr><th>Order ID</th><td id="orderID">-</td></tr>
                         <tr><th>Order Placed</th><td id="receiptTime">-</td></tr>
                         <tr><th>Order Completed</th><td id="completionTime">-</td></tr>
@@ -48,7 +44,7 @@
                 </div>
 
                 <div class="receipt-actions">
-                    <a href="student_home.html" class="btn btn-primary">Browse Menu</a>
+                    <a href="student_home.php" class="btn btn-primary">Browse Menu</a>
                 </div>
             </div>
         </main>

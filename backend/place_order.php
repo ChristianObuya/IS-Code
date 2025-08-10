@@ -1,85 +1,90 @@
 <?php
 session_start();
-require_once 'config.php';
+include 'config.php';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
-    exit;
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'student') {
+    echo "Access denied";
+    exit();
 }
 
-$input = json_decode(file_get_contents('php://input'), true);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_SESSION['userID'])) {
+        echo "Invalid session";
+        exit();
+    }
 
-// Security: User must be a logged-in student to place an order.
-if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'student') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Access denied. Please log in as a student.']);
-    exit;
-}
+    $totalAmount = (float)($_POST['totalAmount'] ?? 0);
+    if ($totalAmount <= 0) {
+        echo "Invalid amount";
+        exit();
+    }
 
-// Validate required fields
-if (!isset($input['items']) || !isset($input['totalAmount'])) {
-    echo json_encode(['success' => false, 'message' => 'Missing required data.']);
-    exit;
-}
+    $itemIDs = $_POST['item_ids'] ?? [];
+    $quantities = $_POST['item_quantities'] ?? [];
 
-$studentID = (int)$_SESSION['userID']; // Use session for security
-$totalAmount = floatval($input['totalAmount']);
-$items = $input['items'];
+    if (empty($itemIDs) || empty($quantities) || count($itemIDs) !== count($quantities)) {
+        echo "No items";
+        exit();
+    }
 
-try {
-    // Start transaction
-    $pdo->beginTransaction();
-
-    // --- Stock Verification Step ---
-    // Lock inventory rows for the items in the cart to prevent race conditions
-    $itemIDs = array_map(fn($item) => (int)$item['id'], $items);
-    $placeholders = implode(',', array_fill(0, count($itemIDs), '?'));
-    
-    $stockCheckStmt = $pdo->prepare("SELECT itemID, stockQuantity FROM Inventory WHERE itemID IN ($placeholders) FOR UPDATE");
-    $stockCheckStmt->execute($itemIDs);
-    $currentStock = $stockCheckStmt->fetchAll(PDO::FETCH_KEY_PAIR);
-
-    foreach ($items as $item) {
-        $itemID = (int)$item['id'];
-        $quantityNeeded = (int)$item['quantity'];
-        if (!isset($currentStock[$itemID]) || $currentStock[$itemID] < $quantityNeeded) {
-            throw new Exception("This item is currently out of stock, please adjust your cart.");
+    $items = [];
+    for ($i = 0; $i < count($itemIDs); $i++) {
+        $id = (int)$itemIDs[$i];
+        $qty = (int)$quantities[$i];
+        if ($id > 0 && $qty > 0) {
+            $items[] = ['id' => $id, 'quantity' => $qty];
         }
     }
 
-    // --- Create Order and OrderItems (if stock is sufficient) ---
-    $stmt = $pdo->prepare("INSERT INTO `Order` (studentID, totalAmount, status) VALUES (?, ?, 'pending')");
-    $stmt->execute([$studentID, $totalAmount]);
-    $orderID = $pdo->lastInsertId();
-
-    $itemStmt = $pdo->prepare("INSERT INTO OrderItem (orderID, itemID, quantity) VALUES (?, ?, ?)");
-    $stockUpdateStmt = $pdo->prepare("UPDATE Inventory SET stockQuantity = stockQuantity - ? WHERE itemID = ?");
-
-    foreach ($items as $item) {
-        $itemID = (int)$item['id'];
-        $quantity = (int)$item['quantity'];
-        if ($quantity > 0) {
-            $itemStmt->execute([$orderID, $itemID, $quantity]);
-            $stockUpdateStmt->execute([$quantity, $itemID]); // Decrease stock
-        }
+    if (empty($items)) {
+        echo "No valid items";
+        exit();
     }
 
-    // Commit transaction
-    $pdo->commit();
+    $sql = "INSERT INTO `Order` (studentID, totalAmount, status) VALUES ('{$_SESSION['userID']}', '$totalAmount', 'pending')";
+    if (mysqli_query($connectdb, $sql)) {
+        $orderID = mysqli_insert_id($connectdb);
 
-    echo json_encode([
-        'success' => true,
-        'orderID' => $orderID,
-        'message' => 'Order placed successfully.'
-    ]);
+        foreach ($items as $item) {
+            $itemID = (int)$item['id'];
+            $quantity = (int)$item['quantity'];
+            if ($quantity > 0) {
+                $itemSql = "INSERT INTO OrderItem (orderID, itemID, quantity) VALUES ($orderID, $itemID, $quantity)";
+                mysqli_query($connectdb, $itemSql);
+            }
+        }
 
-} catch (Exception $e) {
-    $pdo->rollback();
-    error_log("Order placement failed: " . $e->getMessage());
-    echo json_encode([
-        'success' => false,
-        'message' => $e->getMessage()
-    ]);
+        echo "success|$orderID";
+    } else {
+        echo "Failed to create order";
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $orderID = $_GET['orderID'] ?? null;
+    if (!$orderID || !is_numeric($orderID)) {
+        echo "not_found";
+        exit();
+    }
+
+    $studentID = $_SESSION['userID'];
+
+    $query = "
+        SELECT o.orderID, o.totalAmount,
+               GROUP_CONCAT(
+                   CONCAT('{\"name\":\"', m.name, '\",\"price\":', m.price, ',\"quantity\":', oi.quantity, '}')
+               ) AS items_json
+        FROM `Order` o
+        JOIN OrderItem oi ON o.orderID = oi.orderID
+        JOIN MenuItem m ON oi.itemID = m.itemID
+        WHERE o.orderID = $orderID AND o.studentID = $studentID
+        GROUP BY o.orderID
+    ";
+
+    $result = mysqli_query($connectdb, $query);
+    if ($row = mysqli_fetch_assoc($result)) {
+        $items = '[' . $row['items_json'] . ']';
+        echo $row['orderID'] . '|' . $row['totalAmount'] . '|' . urlencode($items);
+    } else {
+        echo "not_found";
+    }
 }
 ?>
