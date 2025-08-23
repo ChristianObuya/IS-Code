@@ -1,57 +1,44 @@
 <?php
 session_start();
-require_once 'config.php';
+include 'config.php';
 
-header('Content-Type: application/json');
-
-// 1. Check if user is logged in
+// Check login
 if (!isset($_SESSION['userID'])) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Access denied. Please log in.']);
-    exit;
+    exit("null");
 }
 
-$userID = (int)$_SESSION['userID'];
-$role = $_SESSION['role'];
-
-// 2. Get and validate input
 $orderID = (int)($_GET['orderID'] ?? 0);
-
 if ($orderID <= 0) {
-    echo json_encode(['success' => false, 'message' => 'Invalid order ID.']);
-    exit;
+    exit("null");
 }
 
-try {
-    // 3. Fetch order and verify ownership
-    $stmt = $pdo->prepare("SELECT status, studentID, orderTime, completionTime FROM `Order` WHERE orderID = ?");
-    $stmt->execute([$orderID]);
-    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+$sql = "SELECT status, orderTime, completionTime, studentID FROM `Order` WHERE orderID = $orderID";
+$result = mysqli_query($connectdb, $sql);
 
-    if (!$order) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Order not found.']);
-        exit;
-    }
-
-    // A student can only see their own order status. Staff can see any.
-    if ($role === 'student' && $order['studentID'] != $userID) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'You are not authorized to view this order.']);
-        exit;
-    }
-
-    // 4. Return status
-    echo json_encode([
-        'success' => true, 
-        'status' => $order['status'],
-        'orderTime' => $order['orderTime'],
-        'completionTime' => $order['completionTime']
-    ]);
-
-} catch (Exception $e) {
-    http_response_code(500);
-    error_log("Get order status failed: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'A database error occurred.']);
+if (!$result || mysqli_num_rows($result) == 0) {
+    exit("null");
 }
+
+$order = mysqli_fetch_assoc($result);
+
+if ($_SESSION['role'] === 'student' && $order['studentID'] != $_SESSION['userID']) {
+    exit("null");
+}
+
+$currentStatus = $order['status'];
+$completionTime = $order['completionTime'];
+
+// If status is 'ready' or 'collected' and completionTime is NULL, set it
+if (($currentStatus === 'ready' || $currentStatus === 'collected') && !$completionTime) {
+    $updateSql = "UPDATE `Order` SET completionTime = NOW() WHERE orderID = $orderID";
+    mysqli_query($connectdb, $updateSql);
+}
+
+// Re-fetch latest order data so receipt is up to date
+$sql = "SELECT status, orderTime, completionTime FROM `Order` WHERE orderID = $orderID";
+$result = mysqli_query($connectdb, $sql);
+$order = mysqli_fetch_assoc($result);
+
+// Output: status|orderTime|completionTime
+echo $order['status'] . '|' . $order['orderTime'] . '|' . ($order['completionTime'] ?: 'null');
 ?>

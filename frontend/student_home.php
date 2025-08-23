@@ -1,3 +1,12 @@
+<?php
+session_start();
+include '../backend/config.php';
+
+if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'student') {
+    header("Location: ../frontend/login.php");
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,15 +41,12 @@
         <main class="main-content">
             <section class="menu-grid" id="menuGrid">
                 <?php
-                include '../backend/config.php';
-
                 $query = "SELECT itemID, name, description, price, imagePath, category FROM MenuItem";
                 $result = mysqli_query($connectdb, $query);
 
                 if ($result && mysqli_num_rows($result) > 0) {
                     while ($row = mysqli_fetch_assoc($result)) {
                         echo "<div class='menu-card' data-category='" . htmlspecialchars($row['category']) . "'>";
-                        // ✅ Fixed: img has data-id, data-name, data-price
                         echo "<img class='add-to-cart' 
                                     data-id='" . (int)$row['itemID'] . "' 
                                     data-name='" . htmlspecialchars($row['name']) . "' 

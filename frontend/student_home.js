@@ -26,22 +26,20 @@ var cart = [];
 var cartList = document.getElementById("cartItems");
 var cartTotal = document.getElementById("cartTotal");
 var checkoutBtn = document.getElementById("checkoutBtn");
-var addToCartImages = document.getElementsByClassName("add-to-cart"); // these are the <img> tags
+var addToCartImages = document.getElementsByClassName("add-to-cart");
 
-// Attach click event to each image (acts as add-to-cart button)
+// Add items to cart
 for (var i = 0; i < addToCartImages.length; i++) {
     addToCartImages[i].onclick = function () {
         var id = this.getAttribute("data-id");
         var name = this.getAttribute("data-name");
         var price = parseFloat(this.getAttribute("data-price"));
 
-        // Safety check
         if (!id || !name || isNaN(price)) {
-            console.error("Missing data on item:", this);
+            console.error("Missing or invalid data on item:", this);
             return;
         }
 
-        // Check if item already in cart
         var found = false;
         for (var j = 0; j < cart.length; j++) {
             if (cart[j].id == id) {
@@ -51,7 +49,6 @@ for (var i = 0; i < addToCartImages.length; i++) {
             }
         }
 
-        // Add new item if not found
         if (!found) {
             cart.push({
                 id: id,
@@ -83,18 +80,17 @@ function updateCart() {
         total += itemTotal;
 
         var li = document.createElement("li");
-        li.innerHTML = `
-            ${item.name} × ${item.quantity}
-            <span>KES ${itemTotal.toFixed(2)}</span>
-            <button class="delete-item" data-index="${i}">×</button>
-        `;
+        li.innerHTML =
+            item.name + " × " + item.quantity +
+            " <span>KES " + itemTotal.toFixed(2) + "</span>" +
+            " <button class='delete-item' data-index='" + i + "'>×</button>";
         cartList.appendChild(li);
     }
 
     cartTotal.textContent = total.toFixed(2);
     checkoutBtn.disabled = false;
 
-    // Reattach delete buttons
+    // Delete item from cart
     var deleteButtons = document.getElementsByClassName("delete-item");
     for (var i = 0; i < deleteButtons.length; i++) {
         deleteButtons[i].onclick = function () {
@@ -122,56 +118,38 @@ function closeModal() {
 }
 
 // === PROCEED TO PAYMENT ===
-document.getElementById("checkoutBtn").onclick = function () {
+checkoutBtn.onclick = function () {
     if (cart.length === 0) {
         alert("Your cart is empty.");
         return;
     }
 
-    // Calculate total
     var totalAmount = 0;
     for (var i = 0; i < cart.length; i++) {
         totalAmount += cart[i].price * cart[i].quantity;
     }
 
-    // Create FormData
     var formData = new FormData();
-
-    // Append items as simple arrays
     for (var i = 0; i < cart.length; i++) {
         formData.append("item_ids[]", cart[i].id);
         formData.append("item_quantities[]", cart[i].quantity);
     }
     formData.append("totalAmount", totalAmount.toFixed(2));
 
-    // Debug: See what's being sent
-    console.log("Sending order:");
-    for (let [key, value] of formData.entries()) {
-        console.log(key, "=", value);
-    }
-
     // Send to backend
     fetch("../backend/place_order.php", {
         method: "POST",
         body: formData
     })
-    .then(function (response) {
-        return response.text();
-    })
+    .then(function (response) { return response.text(); })
     .then(function (text) {
-        // Debug: See what the server says
-        console.log("Server response:", text);
-
-        var trimmed = text.trim();
-
-        // If it starts with "success|"
-        if (trimmed.startsWith("success|")) {
-            var orderID = trimmed.split("|")[1];
-            // Redirect with orderID and totalAmount
+        text = text.trim();
+        if (text.startsWith("success|")) {
+            var orderID = text.split("|")[1];
+            // Redirect to student_payment.html with order info
             window.location.href = "student_payment.html?orderID=" + orderID + "&totalAmount=" + totalAmount;
         } else {
-            // Show the real error
-            alert("Order failed: " + trimmed);
+            alert("Order failed: " + text);
         }
     })
     .catch(function (error) {

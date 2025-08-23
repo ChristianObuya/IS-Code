@@ -14,19 +14,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $totalAmount = (float)($_POST['totalAmount'] ?? 0);
+    $itemIDs = $_POST['item_ids'] ?? [];
+    $quantities = $_POST['item_quantities'] ?? [];
+
     if ($totalAmount <= 0) {
         echo "Invalid amount";
         exit();
     }
-
-    $itemIDs = $_POST['item_ids'] ?? [];
-    $quantities = $_POST['item_quantities'] ?? [];
 
     if (empty($itemIDs) || empty($quantities) || count($itemIDs) !== count($quantities)) {
         echo "No items";
         exit();
     }
 
+    // Build items array
     $items = [];
     for ($i = 0; $i < count($itemIDs); $i++) {
         $id = (int)$itemIDs[$i];
@@ -41,16 +42,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    $sql = "INSERT INTO `Order` (studentID, totalAmount, status) VALUES ('{$_SESSION['userID']}', '$totalAmount', 'pending')";
+    // Check inventory stock first
+    $hasEnoughStock = true;
+    foreach ($items as $item) {
+        $itemID = (int)$item['id'];
+        $quantity = (int)$item['quantity'];
+        
+        $stockQuery = "SELECT i.stockQuantity FROM Inventory i WHERE i.itemID = $itemID";
+        $stockResult = mysqli_query($connectdb, $stockQuery);
+        
+        if ($stockRow = mysqli_fetch_assoc($stockResult)) {
+            $currentStock = (int)$stockRow['stockQuantity'];
+            if ($quantity > $currentStock) {
+                $hasEnoughStock = false;
+                break;
+            }
+        } else {
+            $hasEnoughStock = false;
+            break;
+        }
+    }
+
+    if (!$hasEnoughStock) {
+        echo "Insufficient stock, please readjust your cart";
+        exit();
+    }
+
+    // Create order
+    $studentID = $_SESSION['userID'];
+    $sql = "INSERT INTO `Order` (studentID, totalAmount, status) VALUES ('$studentID', '$totalAmount', 'pending')";
+    
     if (mysqli_query($connectdb, $sql)) {
         $orderID = mysqli_insert_id($connectdb);
 
+        // Add order items and update inventory
         foreach ($items as $item) {
             $itemID = (int)$item['id'];
             $quantity = (int)$item['quantity'];
+            
             if ($quantity > 0) {
+                // Insert order item
                 $itemSql = "INSERT INTO OrderItem (orderID, itemID, quantity) VALUES ($orderID, $itemID, $quantity)";
                 mysqli_query($connectdb, $itemSql);
+                
+                // Update inventory
+                $updateSql = "UPDATE Inventory SET stockQuantity = stockQuantity - $quantity WHERE itemID = $itemID";
+                mysqli_query($connectdb, $updateSql);
             }
         }
 
@@ -58,6 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         echo "Failed to create order";
     }
+    
 } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $orderID = $_GET['orderID'] ?? null;
     if (!$orderID || !is_numeric($orderID)) {

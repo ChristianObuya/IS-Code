@@ -34,7 +34,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     });
 });
 
-// Show Add Item Form ---
+// Show Add Item Form
 addItemBtn.addEventListener('click', () => {
     itemForm.reset();
     document.getElementById('itemID').value = '';
@@ -64,11 +64,7 @@ function loadMenuItems() {
 function attachMenuButtonListeners() {
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.onclick = function () {
-            const id = this.dataset.id;
-            const name = this.dataset.name;
-            const price = this.dataset.price;
-            const category = this.dataset.category;
-            const desc = this.dataset.desc;
+            const { id, name, price, category, desc } = this.dataset;
 
             document.getElementById('formTitle').textContent = 'Edit Item';
             document.getElementById('itemID').value = id;
@@ -77,7 +73,7 @@ function attachMenuButtonListeners() {
             document.getElementById('itemCategory').value = category;
             document.getElementById('itemDesc').value = desc || '';
 
-            document.getElementById('itemForm').style.display = 'block';
+            itemForm.style.display = 'block';
             document.getElementById('menuTable').scrollIntoView({ behavior: 'smooth' });
         };
     });
@@ -98,22 +94,24 @@ function attachMenuButtonListeners() {
     });
 }
 
+// --- Save Item (Add/Edit) — SINGLE HANDLER ---
 itemForm.addEventListener('submit', function (e) {
     e.preventDefault();
+
     const formData = new FormData();
     const itemIDInput = document.getElementById('itemID').value;
 
     formData.append('action', itemIDInput ? 'edit' : 'add');
     if (itemIDInput) formData.append('id', itemIDInput);
 
-    formData.append('name', document.getElementById('itemName').value);
-    formData.append('description', document.getElementById('itemDesc').value);
-    formData.append('price', document.getElementById('itemPrice').value);
-    formData.append('category', document.getElementById('itemCategory').value);
+    formData.append('name', itemName.value);
+    formData.append('description', itemDesc.value);
+    formData.append('price', itemPrice.value);
+    formData.append('category', itemCategory.value);
     formData.append('available', '1');
 
     const imageInput = document.getElementById('itemImage');
-    if (imageInput.files.length > 0) {
+    if (imageInput && imageInput.files.length > 0) {
         formData.append('image', imageInput.files[0]);
     }
 
@@ -121,12 +119,16 @@ itemForm.addEventListener('submit', function (e) {
         method: 'POST',
         body: formData
     })
-    .then(() => {
+    .then(response => response.text())
+    .then(text => {
+        console.log('Save response:', text);
         itemForm.style.display = 'none';
-        imageInput.value = '';
+        if (imageInput) imageInput.value = '';
         loadMenuItems();
     })
-    .catch(() => alert('Save failed. Check connection.'));
+    .catch(() => {
+        alert('Save failed. Check connection.');
+    });
 });
 
 // Load Inventory
@@ -207,58 +209,46 @@ function loadStockReport() {
         });
 }
 
-// Save Item (Add/Edit)
-itemForm.addEventListener('submit', function (e) {
-    e.preventDefault();
-
-    const formData = new FormData();
-    const itemIDInput = document.getElementById('itemID').value;
-
-    formData.append('action', itemIDInput ? 'edit' : 'add');
-    if (itemIDInput) formData.append('id', itemIDInput);
-
-    formData.append('name', document.getElementById('itemName').value);
-    formData.append('description', document.getElementById('itemDesc').value);
-    formData.append('price', document.getElementById('itemPrice').value);
-    formData.append('category', document.getElementById('itemCategory').value);
-    formData.append('available', '1');
-
-    const imageInput = document.getElementById('itemImage');
-    if (imageInput.files.length > 0) {
-        formData.append('image', imageInput.files[0]);
-    }
-
-    fetch('../backend/manage_menu.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.text())
-    .then(text => {
-        console.log('Save response:', text);
-        itemForm.style.display = 'none';
-        imageInput.value = '';
-        loadMenuItems();
-    })
-    .catch(() => {
-        alert('Save failed. Check connection.');
-    });
-});
-
 // View Orders
-viewOrdersBtn.addEventListener('click', () => {
-    ordersModal.style.display = 'block';
-    ordersBody.innerHTML = '<tr><td colspan="6">Loading orders...</td></tr>';
+viewOrdersBtn.onclick = function () {
     fetch('../backend/get_orders.php')
-        .then(response => response.text())
+        .then(r => r.text())
         .then(html => {
             ordersBody.innerHTML = html;
+            attachOrderStatusListeners();
+            ordersModal.style.display = 'block';
         })
         .catch(() => {
             ordersBody.innerHTML = '<tr><td colspan="6">Failed to load orders.</td></tr>';
+            ordersModal.style.display = 'block';
         });
-});
+};
 
-// Close Orders Modal
+function attachOrderStatusListeners() {
+    document.querySelectorAll('#ordersModal .status-form select').forEach(select => {
+        select.onchange = function () {
+            const form = this.closest('form');
+            const formData = new FormData(form);
+            const row = form.closest('tr');
+            const newStatus = this.value;
+
+            fetch('../backend/get_orders.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(() => {
+                if (newStatus === 'collected') {
+                    row.remove(); // remove immediately from modal
+                }
+            })
+            .catch(err => {
+                console.error('Update failed:', err);
+                alert('Failed to update status.');
+            });
+        };
+    });
+}
+
 function closeModal() {
     ordersModal.style.display = 'none';
 }

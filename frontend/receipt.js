@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
+    // Set static values
     document.getElementById('orderID').textContent = orderID;
     document.getElementById('receiptID').textContent = 'RCPT' + orderID;
     document.getElementById('transactionID').textContent = 'MPESA-' + orderID;
@@ -16,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var receiptTotalEl = document.getElementById('receiptTotal');
     receiptItemsEl.innerHTML = '';
 
+    // Load order items
     fetch('../backend/place_order.php?orderID=' + orderID)
         .then(function (response) {
             return response.text();
@@ -55,30 +57,59 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.href = 'student_home.php';
         });
 
+    // Status Elements
     var statusTextEl = document.getElementById('orderStatusText');
     var receiptTimeEl = document.getElementById('receiptTime');
     var completionTimeEl = document.getElementById('completionTime');
 
-    statusTextEl.textContent = 'Paid';
-    receiptTimeEl.textContent = new Date().toLocaleString();
-    completionTimeEl.textContent = 'In progress...';
+    // Function to fetch and update status
+    function updateStatus() {
+        fetch('../backend/get_order_status.php?orderID=' + orderID)
+            .then(function (response) {
+                return response.text();
+            })
+            .then(function (data) {
+                data = data.trim();
 
-    fetch('../backend/get_order_status.php?orderID=' + orderID)
-        .then(function (response) {
-            return response.json();
-        })
-        .then(function (result) {
-            if (result.success) {
-                statusTextEl.textContent = result.status.charAt(0).toUpperCase() + result.status.slice(1);
-                if (result.orderTime) {
-                    receiptTimeEl.textContent = new Date(result.orderTime).toLocaleString();
+                if (data === 'null' || data === 'Order not found' || data === 'Not authorized') {
+                    return;
                 }
-                if (result.completionTime) {
-                    completionTimeEl.textContent = new Date(result.completionTime).toLocaleString();
+
+                var parts = data.split('|');
+                var status = parts[0];
+                var orderTime = parts[1];
+                var completionTime = parts[2];
+
+                if (status !== 'null') {
+                    statusTextEl.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                    receiptTimeEl.textContent = new Date(orderTime).toLocaleString();
+
+                    if (status === 'ready' || status === 'collected') {
+                        var banner = document.getElementById('receiptStatusBanner');
+                        if (status === 'ready') {
+                            banner.style.background = '#d4edda';
+                            banner.style.color = '#155724';
+                        } else if (status === 'collected') {
+                            banner.style.background = '#e2e3e5';
+                            banner.style.color = '#383d41';
+                        }
+                    }
+
+                    if (completionTime !== 'null') {
+                        completionTimeEl.textContent = new Date(completionTime).toLocaleString();
+                    } else {
+                        completionTimeEl.textContent = 'In progress...';
+                    }
                 }
-            }
-        })
-        .catch(function () {
-            statusTextEl.textContent = 'Status: Error';
-        });
+            })
+            .catch(function () {
+                statusTextEl.textContent = 'Status: Error';
+            });
+    }
+
+    // Initial status load
+    updateStatus();
+
+    // Poll every 5 seconds
+    setInterval(updateStatus, 5000);
 });

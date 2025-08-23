@@ -4,9 +4,10 @@ include 'config.php';
 
 if (isset($_SESSION['role']) && $_SESSION['role'] === 'staff') {
 
+    // Order by ID so that newest items are at the bottom
     $sql = "SELECT itemID, name, description, price, category, available 
             FROM MenuItem 
-            ORDER BY available DESC, name ASC";
+            ORDER BY itemID ASC";
 
     $result = mysqli_query($connectdb, $sql);
 
@@ -17,16 +18,13 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'staff') {
 
     if (mysqli_num_rows($result) > 0) {
         while ($item = mysqli_fetch_assoc($result)) {
-            $btnClass = 'btn-delete';
-            $toggleText = 'Delete';
-
             echo "
             <tr>
                 <td>" . $item['itemID'] . "</td>
                 <td>" . htmlspecialchars($item['name']) . "</td>
                 <td>KES " . number_format($item['price'], 2) . "</td>
                 <td>" . ucfirst($item['category']) . "</td>
-                <td>Yes</td>
+                <td>" . ($item['available'] ? 'Yes' : 'No') . "</td>
                 <td>
                     <button class='btn-edit' 
                             data-id='" . $item['itemID'] . "'

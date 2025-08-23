@@ -8,7 +8,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <header class="header">
             <h1>CampusBite</h1>
             <p>Canteen Staff Portal</p>
@@ -18,7 +17,6 @@
             </div>
         </header>
 
-        <!-- Tabs -->
         <nav class="staff-nav">
             <button class="nav-btn active" data-tab="menu">Menu Management</button>
             <button class="nav-btn" data-tab="inventory">Inventory</button>
@@ -26,9 +24,7 @@
             <button class="nav-btn" data-tab="stock">Stock Report</button>
         </nav>
 
-        <!-- Main Content -->
         <main class="main-content staff-main">
-            <!-- Menu Tab -->
             <section id="menu" class="tab-content active">
                 <div class="section-header">
                     <h2>Manage Menu Items</h2>
@@ -96,7 +92,6 @@
                 </table>
             </section>
 
-            <!-- Inventory Tab -->
             <section id="inventory" class="tab-content">
                 <h2>Inventory Levels</h2>
                 <table class="data-table" id="inventoryTable">
@@ -116,7 +111,6 @@
                 </table>
             </section>
 
-            <!-- Sales Report Tab -->
             <section id="sales" class="tab-content">
                 <h2>Sales Report</h2>
                 <div class="report-filters">
@@ -131,7 +125,6 @@
                 </div>
             </section>
 
-            <!-- Stock Report Tab -->
             <section id="stock" class="tab-content">
                 <h2>Stock Report</h2>
                 <div id="stockReportContent">
@@ -140,7 +133,6 @@
             </section>
         </main>
 
-        <!-- Orders Modal -->
         <div class="modal" id="ordersModal" style="display: none;">
             <div class="modal-content">
                 <h3>Student Orders</h3>
@@ -151,9 +143,8 @@
                                 <th>Order ID</th>
                                 <th>Student ID</th>
                                 <th>Total (KES)</th>
-                                <th>Status</th>
                                 <th>Time</th>
-                                <th>Update</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="ordersBody"></tbody>

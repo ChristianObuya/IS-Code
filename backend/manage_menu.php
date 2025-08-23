@@ -103,16 +103,24 @@ if ($action === 'edit') {
     }
 }
 
+// --- ACTION: DELETE ---
 if ($action === 'delete') {
     $id = (int)$_POST['id'];
+
+    // Check if item exists
     $result = mysqli_query($connectdb, "SELECT itemID FROM MenuItem WHERE itemID = $id");
     if (mysqli_num_rows($result) == 0) {
         echo "<script>alert('Item not found.'); window.history.back();</script>";
         exit();
     }
+
+    // Delete related inventory row first (to avoid foreign key constraint errors)
+    mysqli_query($connectdb, "DELETE FROM Inventory WHERE itemID = $id");
+
+    // Then delete the menu item itself
     $sql = "DELETE FROM MenuItem WHERE itemID = $id";
     if (mysqli_query($connectdb, $sql)) {
-        echo "<script>alert('Item deleted.'); window.history.back();</script>";
+        echo "<script>alert('Item deleted successfully.'); window.location.href='../staff/staff_dashboard.html';</script>";
         exit();
     } else {
         $error = mysqli_error($connectdb);
