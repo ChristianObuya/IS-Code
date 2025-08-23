@@ -54,9 +54,9 @@ if ($action === 'add') {
 
     if (mysqli_query($connectdb, $sql)) {
         $itemID = mysqli_insert_id($connectdb);
-        $stockSql = "INSERT INTO Inventory (itemID, stockQuantity, lowStockThreshold) VALUES ($itemID, 50, 5)";
+        $stockSql = "INSERT INTO Inventory (itemID, stockQuantity, lowStockThreshold) VALUES ($itemID, 1, 5)";
         mysqli_query($connectdb, $stockSql);
-        header('Location: ../staff/staff_dashboard.html');
+        header('Location: ../frontend/staff_dashboard.html');
         exit();
     } else {
         $error = mysqli_error($connectdb);

@@ -16,7 +16,7 @@ $sql = "
         COALESCE(i.lowStockThreshold, 5) AS lowStockThreshold 
     FROM MenuItem m
     LEFT JOIN Inventory i ON m.itemID = i.itemID
-    ORDER BY m.available DESC, m.name
+    ORDER BY m.itemID ASC
 ";
 
 $result = mysqli_query($connectdb, $sql);
@@ -28,14 +28,11 @@ if (!$result) {
 
 if (mysqli_num_rows($result) > 0) {
     while ($item = mysqli_fetch_assoc($result)) {
-        $isAvailable = $item['available'] == 1;
         $stock = $item['stockQuantity'];
         $threshold = $item['lowStockThreshold'];
 
-        if (!$isAvailable) {
-            $statusText = "Unavailable";
-            $statusClass = "unavailable-status";
-        } elseif ($stock <= $threshold) {
+        // Since all items are available, we only check stock levels
+        if ($stock <= $threshold) {
             $statusText = "Low Stock";
             $statusClass = "low-stock";
         } else {
@@ -43,12 +40,8 @@ if (mysqli_num_rows($result) > 0) {
             $statusClass = "";
         }
 
-        $rowClass = $isAvailable ? "" : "item-unavailable";
-
-        $disabled = $isAvailable ? "" : "disabled";
-
         echo "
-        <tr class='$rowClass'>
+        <tr data-item-id='" . $item['itemID'] . "'>
             <td>" . $item['itemID'] . "</td>
             <td>" . htmlspecialchars($item['name']) . "</td>
             <td>$stock</td>
@@ -56,8 +49,9 @@ if (mysqli_num_rows($result) > 0) {
             <td><strong class='$statusClass'>$statusText</strong></td>
             <td>
                 <div class='stock-update-form'>
-                    <input type='number' class='stock-input' placeholder='Qty' min='1' step='1' $disabled>
-                    <button class='btn-add-stock' data-id='" . $item['itemID'] . "' $disabled>Add</button>
+                    <input type='number' class='stock-input' placeholder='Qty' min='1' step='1'>
+                    <button class='btn-add-stock' data-id='" . $item['itemID'] . "'>Add</button>
+                    <button class='btn-delete-item' data-id='" . $item['itemID'] . "'>Delete</button>
                 </div>
             </td>
         </tr>";

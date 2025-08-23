@@ -82,7 +82,45 @@ if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'student') {
             <h3>My Orders</h3>
             <div class="modal-body">
                 <div id="ordersList">
-                    <p>No orders placed yet.</p>
+                    <?php
+                    // Fetch orders for the current student
+                    $studentID = (int)$_SESSION['userID'];
+                    $ordersQuery = "
+                        SELECT o.orderID, o.totalAmount, o.orderTime, o.transactionID
+                        FROM `Order` o
+                        WHERE o.studentID = $studentID
+                        ORDER BY o.orderTime DESC
+                    ";
+                
+                    $ordersResult = mysqli_query($connectdb, $ordersQuery);
+                
+                    if ($ordersResult && mysqli_num_rows($ordersResult) > 0) {
+                        echo "<table class='orders-table'>";
+                        echo "<thead>";
+                        echo "<tr>";
+                        echo "<th>Order ID</th>";
+                        echo "<th>Amount</th>";
+                        echo "<th>Date & Time</th>";
+                        echo "<th>Transaction ID</th>";
+                        echo "</tr>";
+                        echo "</thead>";
+                        echo "<tbody>";
+                    
+                        while ($order = mysqli_fetch_assoc($ordersResult)) {
+                            echo "<tr>";
+                            echo "<td>" . $order['orderID'] . "</td>";
+                            echo "<td>KES " . number_format($order['totalAmount'], 2) . "</td>";
+                            echo "<td>" . $order['orderTime'] . "</td>";
+                            echo "<td>" . ($order['transactionID'] ? $order['transactionID'] : 'N/A') . "</td>";
+                            echo "</tr>";
+                        }
+                    
+                        echo "</tbody>";
+                        echo "</table>";
+                    } else {
+                        echo "<p>No orders placed yet.</p>";
+                    }
+                    ?>
                 </div>
             </div>
             <div class="modal-actions">
