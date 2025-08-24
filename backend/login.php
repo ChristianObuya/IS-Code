@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = 'All fields are required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Invalid email format.';
-    } elseif (!in_array($expectedRole, ['student', 'staff'])) {
+    } elseif (!in_array($expectedRole, ['student', 'staff', 'admin'])) {
         $error = 'Invalid role provided.';
     }
 
@@ -33,10 +33,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $_SESSION['role'] = $user['role'];
 
                     if ($user['role'] === 'staff') {
-                        header('Location: ../frontend/staff_dashboard.html');
+                        header('Location: ../frontend/staff_dashboard.php');
                         exit();
                     } elseif ($user['role'] === 'student') {
                         header('Location: ../frontend/student_home.php');
+                        exit();
+                    } elseif ($user['role'] === 'admin') {
+                        header('Location: ../frontend/admin_dashboard.php');
                         exit();
                     } else {
                         $error = "Invalid role assigned in system.";

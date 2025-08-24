@@ -19,7 +19,7 @@ if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'student') {
     <div class="container">
         <header class="header">
             <h1>CampusBite</h1>
-            <p>Welcome to the University Canteen</p>
+            <p>Welcome to the University Canteen, <?php echo htmlspecialchars($_SESSION['name']); ?></p>
             <div class="user-actions">
                 <button id="ordersBtn">My Orders</button>
                 <a href="../backend/logout.php" id="logoutBtn">Logout</a>
@@ -27,7 +27,7 @@ if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'student') {
         </header>
 
         <section class="hero">
-            <h2>What would you like to eat today?</h2>
+            <h2>What would you like to eat today ?</h2>
             <p>Browse the menu and place your order online. Skip the queue!</p>
         </section>
 

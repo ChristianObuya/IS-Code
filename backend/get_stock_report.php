@@ -2,9 +2,18 @@
 session_start();
 include 'config.php';
 
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'staff') {
-    echo "<p>Access denied. Please log in as staff.</p>";
-    exit();
+$isAdmin = false;
+if (isset($_SESSION['userID'])) {
+    $userID = (int)$_SESSION['userID'];
+    $checkAdminSql = "SELECT role FROM users WHERE userID = $userID";
+    $adminResult = mysqli_query($connectdb, $checkAdminSql);
+    
+    if ($adminResult && mysqli_num_rows($adminResult) > 0) {
+        $userData = mysqli_fetch_assoc($adminResult);
+        if (strtolower($userData['role']) === 'admin') {
+            $isAdmin = true;
+        }
+    }
 }
 
 $sql = "
@@ -15,7 +24,7 @@ $sql = "
         i.lowStockThreshold
     FROM Inventory i
     JOIN MenuItem m ON i.itemID = m.itemID
-    ORDER BY i.stockQuantity ASC  -- Show low stock first
+    ORDER BY i.itemID ASC  -- Order by itemID instead of stock quantity
 ";
 
 $result = mysqli_query($connectdb, $sql);
@@ -34,6 +43,7 @@ if (mysqli_num_rows($result) > 0) {
                 <th>Item Name</th>
                 <th>Stock Quantity</th>
                 <th>Low Stock Threshold</th>
+                <th>Status</th>
             </tr>
         </thead>
         <tbody>";
@@ -43,6 +53,20 @@ if (mysqli_num_rows($result) > 0) {
         $itemName = htmlspecialchars($row['itemName']);
         $stockQuantity = $row['stockQuantity'];
         $threshold = $row['lowStockThreshold'];
+        
+        // Determine status based on stock level
+        $status = '';
+        $statusClass = '';
+        if ($stockQuantity == 0) {
+            $status = 'Out of Stock';
+            $statusClass = 'status-out';
+        } elseif ($stockQuantity <= $threshold) {
+            $status = 'Low Stock';
+            $statusClass = 'status-low';
+        } else {
+            $status = 'In Stock';
+            $statusClass = 'status-ok';
+        }
 
         echo "
             <tr>
@@ -50,6 +74,7 @@ if (mysqli_num_rows($result) > 0) {
                 <td>$itemName</td>
                 <td>$stockQuantity</td>
                 <td>$threshold</td>
+                <td class='$statusClass'>$status</td>
             </tr>";
     }
 

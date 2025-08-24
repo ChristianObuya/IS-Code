@@ -2,10 +2,18 @@
 session_start();
 include 'config.php';  // Gives us $connectdb
 
-// Check if user is logged in and is staff
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'staff') {
-    echo "<p>Access denied. Please log in as staff.</p>";
-    exit();
+$isAdmin = false;
+if (isset($_SESSION['userID'])) {
+    $userID = (int)$_SESSION['userID'];
+    $checkAdminSql = "SELECT role FROM users WHERE userID = $userID";
+    $adminResult = mysqli_query($connectdb, $checkAdminSql);
+    
+    if ($adminResult && mysqli_num_rows($adminResult) > 0) {
+        $userData = mysqli_fetch_assoc($adminResult);
+        if (strtolower($userData['role']) === 'admin') {
+            $isAdmin = true;
+        }
+    }
 }
 
 // --- 1. Get and Validate Date Range ---

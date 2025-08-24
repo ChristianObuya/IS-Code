@@ -1,3 +1,11 @@
+<?php
+session_start();
+if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'staff') {
+    header("Location: staff_login.php");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +18,7 @@
     <div class="container">
         <header class="header">
             <h1>CampusBite</h1>
-            <p>Canteen Staff Portal</p>
+            <p>Welcome to the Staff Dashboard, <?php echo htmlspecialchars($_SESSION['name']); ?></p>
             <div class="user-actions">
                 <button id="viewOrdersBtn">View Orders</button>
                 <a href="../backend/logout.php" id="logoutBtn">Logout</a>
@@ -20,8 +28,6 @@
         <nav class="staff-nav">
             <button class="nav-btn active" data-tab="menu">Menu Management</button>
             <button class="nav-btn" data-tab="inventory">Inventory</button>
-            <button class="nav-btn" data-tab="sales">Sales Report</button>
-            <button class="nav-btn" data-tab="stock">Stock Report</button>
         </nav>
 
         <main class="main-content staff-main">
@@ -109,27 +115,6 @@
                         <tr><td colspan="6" class="loading">Loading inventory...</td></tr>
                     </tbody>
                 </table>
-            </section>
-
-            <section id="sales" class="tab-content">
-                <h2>Sales Report</h2>
-                <div class="report-filters">
-                    <label for="salesStartDate">Start Date:</label>
-                    <input type="date" id="salesStartDate">
-                    <label for="salesEndDate">End Date:</label>
-                    <input type="date" id="salesEndDate">
-                    <button id="generateSalesReport" class="btn btn-primary">Generate</button>
-                </div>
-                <div id="salesReportContent">
-                    <p>Select a date range to view the sales report.</p>
-                </div>
-            </section>
-
-            <section id="stock" class="tab-content">
-                <h2>Stock Report</h2>
-                <div id="stockReportContent">
-                    <p class="loading">Loading stock report...</p>
-                </div>
             </section>
         </main>
 

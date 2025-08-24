@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin Registration | CampusBite</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>CampusBite</h1>
+            <p>Admin Registration (Restricted Access)</p>
+        </header>
+
+        <main class="centered-section">
+            <div class="login-box">
+                <h2>Register Admin Account</h2>
+                <p style="color: #666; text-align: center; margin-bottom: 20px;">
+                    Admin registration requires authorization. Contact system administrator.
+                </p>
+                
+                <form id="adminRegisterForm" action="../backend/admin_register.php" method="POST">
+                    <div class="form-group">
+                        <label for="userID">Admin ID</label>
+                        <input type="number" id="userID" name="userID" placeholder="e.g., 123456 (6 digits)" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" placeholder="Enter admin full name" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="Enter admin email" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="Create secure password (min 6 chars)" required />
+                    </div>
+
+                    <input type="hidden" name="role" value="admin">
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px;">Register Admin</button>
+                    <p id="message"></p>
+
+                    <div class="links">
+                        <a href="admin_login.html">Already have an admin account? Login</a><br>
+                        <a href="index.html">Back to Main Login</a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+
+<script>
+document.getElementById('adminRegisterForm').addEventListener('submit', function (e) {
+    const userID = document.getElementById('userID').value.trim();
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const adminKey = document.getElementById('adminKey').value.trim();
+
+    const messageEl = document.getElementById('message');
+    messageEl.textContent = '';
+    messageEl.style.color = 'red';
+
+    if (!userID || !name || !email || !password || !adminKey) {
+        e.preventDefault();
+        messageEl.textContent = 'All fields are required.';
+        return;
+    }
+
+    // Validate 6-digit ID
+    if (!/^\d{6}$/.test(userID)) {
+        e.preventDefault();
+        messageEl.textContent = 'Admin ID must be exactly 6 digits.';
+        return;
+    }
+
+    if (!email.includes('@') || !email.includes('.')) {
+        e.preventDefault();
+        messageEl.textContent = 'Invalid email format.';
+        return;
+    }
+
+    if (password.length < 6) {
+        e.preventDefault();
+        messageEl.textContent = 'Password must be at least 6 characters.';
+        return;
+    }
+});
+</script>
+</body>
+</html>

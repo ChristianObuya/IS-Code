@@ -11,7 +11,9 @@
         <header class="header">
             <h1>CampusBite</h1>
             <p>Payment Portal</p>
-            <a href="../backend/logout.php" id="logoutBtn">Logout</a>
+            <div class="user-actions">
+                <a href="../backend/logout.php" id="logoutBtn">Logout</a>
+            </div>
         </header>
 
         <main class="payment-main centered-section">
@@ -30,11 +32,11 @@
                 <section class="payment-form">
                     <h3>Pay with M-Pesa</h3>
                     <div class="form-group">
-                        <label>Phone Number</label>
-                        <input type="text" id="phone" placeholder="e.g., 0712345678" required />
+                        <label>Phone Number (format: 2547XXXXXXXX)</label>
+                        <input type="text" id="phone" placeholder="e.g., 0712345678 or 254712345678" required />
                     </div>
-                    <button id="payBtn">Send STK Push</button>
-                    <p id="paymentMsg"></p>
+                    <button class="btn btn-primary" id="payBtn">Pay with MPESA</button>
+                    <div id="paymentStatus" style="margin-top: 15px; padding: 10px; border-radius: 5px; display: none;"></div>
                 </section>
             </div>
         </main>

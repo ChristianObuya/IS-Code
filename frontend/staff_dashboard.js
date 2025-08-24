@@ -6,7 +6,6 @@ const itemName = document.getElementById('itemName');
 const itemDesc = document.getElementById('itemDesc');
 const itemPrice = document.getElementById('itemPrice');
 const itemCategory = document.getElementById('itemCategory');
-const itemAvailable = document.getElementById('itemAvailable');
 const addItemBtn = document.getElementById('addItemBtn');
 const cancelBtn = document.getElementById('cancelBtn');
 const ordersModal = document.getElementById('ordersModal');
@@ -26,10 +25,6 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
             loadMenuItems();
         } else if (tab === 'inventory') {
             loadInventory();
-        } else if (tab === 'sales') {
-            loadSalesReport();
-        } else if (tab === 'stock') {
-            loadStockReport();
         }
     });
 });
@@ -94,7 +89,7 @@ function attachMenuButtonListeners() {
     });
 }
 
-// --- Save Item (Add/Edit) — SINGLE HANDLER ---
+// --- Save Item (Add/Edit) ---
 itemForm.addEventListener('submit', function (e) {
     e.preventDefault();
 
@@ -168,45 +163,6 @@ function updateStock(itemID, quantity) {
     })
     .then(() => loadInventory())
     .catch(() => alert('Failed to update stock.'));
-}
-
-// Load Sales Report
-function loadSalesReport() {
-    const salesReportContent = document.getElementById('salesReportContent');
-    let salesStartDate = document.getElementById('salesStartDate').value || '';
-    let salesEndDate = document.getElementById('salesEndDate').value || '';
-
-    if (!salesEndDate) salesEndDate = new Date().toISOString().split('T')[0];
-    if (!salesStartDate) {
-        const d = new Date();
-        d.setDate(d.getDate() - 7);
-        salesStartDate = d.toISOString().split('T')[0];
-    }
-
-    salesReportContent.innerHTML = '<p class="loading">Loading sales report...</p>';
-    const url = `../backend/get_sales_report.php?startDate=${salesStartDate}&endDate=${salesEndDate}`;
-    fetch(url)
-        .then(response => response.text())
-        .then(html => {
-            salesReportContent.innerHTML = html;
-        })
-        .catch(() => {
-            salesReportContent.innerHTML = '<p class="error">Failed to load sales report.</p>';
-        });
-}
-
-// Load Stock Report
-function loadStockReport() {
-    const stockReportContent = document.getElementById('stockReportContent');
-    stockReportContent.innerHTML = '<p class="loading">Loading stock report...</p>';
-    fetch('../backend/get_stock_report.php')
-        .then(response => response.text())
-        .then(html => {
-            stockReportContent.innerHTML = html;
-        })
-        .catch(() => {
-            stockReportContent.innerHTML = '<p class="error">Failed to load stock report.</p>';
-        });
 }
 
 // View Orders
