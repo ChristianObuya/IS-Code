@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     
     // Update order as if payment was completed
     $sql = "UPDATE `Order` SET 
-            status = 'collected',
+            status = 'pending',
             transactionID = '$transactionID',
             mpesa_phone = '254708374149'
             WHERE orderID = $orderID";
